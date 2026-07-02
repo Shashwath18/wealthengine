@@ -297,6 +297,19 @@
       } else if (method === 'DELETE') {
         targetUrl = `${SUPABASE_URL}/rest/v1/cards?id=eq.${id}`;
       }
+    } else if (path === '/api/glossary') {
+      const q = params.get('q');
+      if (method === 'GET') {
+        if (q) {
+          targetUrl = `${SUPABASE_URL}/rest/v1/glossary?select=*&or=(term.ilike.*${encodeURIComponent(q)}*,title.ilike.*${encodeURIComponent(q)}*,definition.ilike.*${encodeURIComponent(q)}*)`;
+        } else {
+          targetUrl = `${SUPABASE_URL}/rest/v1/glossary?select=*`;
+        }
+      } else if (method === 'POST') {
+        bodyObj.term = bodyObj.term.toUpperCase();
+        fetchOptions.body = JSON.stringify(bodyObj);
+        targetUrl = `${SUPABASE_URL}/rest/v1/glossary`;
+      }
     } else if (path === '/api/newsletter/subscribe') {
       fetchOptions.body = JSON.stringify({ email: bodyObj.email, source: bodyObj.source || 'home' });
       targetUrl = `${SUPABASE_URL}/rest/v1/subscribers`;
