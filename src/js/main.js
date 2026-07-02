@@ -2359,10 +2359,6 @@
     }
   }
 
-      };
-    }
-  }
-
   // ── News Feed & Detail Controller ───────────
   let currentNewsPage = 1;
   const newsPageSize = 5;
