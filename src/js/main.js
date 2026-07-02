@@ -325,7 +325,7 @@
         throw new Error('Registration failed');
       }
       const token = btoa(JSON.stringify({ email, role: 'Subscriber' }));
-      return { token, user: { email, name, role: 'Subscriber' } };
+      return { token, user: { email, name, role: 'Subscriber', bookmarks: [], likes: [], history: [] } };
     } else if (path === '/api/auth/login') {
       const { email, password } = bodyObj;
       const userRes = await fetch(`${SUPABASE_URL}/rest/v1/users?email=eq.${email}&select=*`, { headers });
@@ -339,7 +339,14 @@
         throw new Error('Invalid email or password.');
       }
       const token = btoa(JSON.stringify({ email: user.email, role: user.role }));
-      return { token, user: { email: user.email, name: user.name, role: user.role } };
+      return { token, user: { 
+        email: user.email, 
+        name: user.name, 
+        role: user.role,
+        bookmarks: user.bookmarks || [],
+        likes: user.likes || [],
+        history: user.history || []
+      } };
     } else if (path === '/api/auth/me') {
       if (state.token) {
         let decoded;
@@ -355,7 +362,15 @@
         const userRes = await fetch(`${SUPABASE_URL}/rest/v1/users?email=eq.${decoded.email}&select=*`, { headers });
         const users = await userRes.json().catch(() => []);
         if (users && users.length > 0) {
-          return { user: { email: users[0].email, name: users[0].name, role: users[0].role } };
+          const user = users[0];
+          return { user: { 
+            email: user.email, 
+            name: user.name, 
+            role: user.role,
+            bookmarks: user.bookmarks || [],
+            likes: user.likes || [],
+            history: user.history || []
+          } };
         }
       }
       throw new Error('Unauthorized');
@@ -1224,6 +1239,62 @@
     await setupCcComparison();
   }
 
+  function renderCardImageHtml(c) {
+    if (c.image && (c.image.toLowerCase().endsWith('.png') || c.image.toLowerCase().endsWith('.jpg') || c.image.toLowerCase().endsWith('.jpeg') || c.image.toLowerCase().startsWith('data:image') || c.image.toLowerCase().startsWith('http'))) {
+      if (c.image.includes('unsplash.com/photo-') && !c.image.includes('card')) {
+        // If it's a generic unsplash blog banner, bypass and show mockup!
+      } else {
+        return `<img src="${c.image}" alt="${c.name}" style="width:100%; height:160px; object-fit:cover; border-radius:12px 12px 0 0;">`;
+      }
+    }
+    
+    let gradient = 'linear-gradient(135deg, #1e293b, #475569)'; 
+    const net = (c.network || '').toLowerCase();
+    const bank = (c.bank || '').toLowerCase();
+    
+    if (net.includes('visa')) {
+      gradient = 'linear-gradient(135deg, #1e3a8a, #3b82f6)'; 
+    } else if (net.includes('master') || net.includes('mc')) {
+      gradient = 'linear-gradient(135deg, #7c2d12, #ea580c)'; 
+    } else if (net.includes('rupay') || bank.includes('sbi')) {
+      gradient = 'linear-gradient(135deg, #064e3b, #10b981)'; 
+    } else if (net.includes('amex') || bank.includes('hdfc')) {
+      gradient = 'linear-gradient(135deg, #581c87, #a855f7)'; 
+    } else if (bank.includes('icici')) {
+      gradient = 'linear-gradient(135deg, #831843, #db2777)'; 
+    }
+    
+    const lastDigits = c.id ? c.id.substring(c.id.length - 4).toUpperCase() : '8888';
+    const cardholder = c.name || 'VALUED MEMBER';
+    
+    return `
+      <div class="css-credit-card-mockup" style="background: ${gradient}; border-radius: 12px; height: 160px; padding: 1.25rem; color: #fff; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; box-shadow: inset 0 0 20px rgba(255,255,255,0.15); margin: 0.5rem; border: 1px solid rgba(255,255,255,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; z-index: 2;">
+          <span style="font-weight: 800; font-size: 0.82rem; letter-spacing: 0.5px; text-transform: uppercase;">${c.bank || 'WealthEngine'}</span>
+          <span style="font-style: italic; font-size: 0.72rem; font-weight: bold; opacity: 0.9;">${c.network || 'Premium'}</span>
+        </div>
+        <div style="width: 32px; height: 22px; background: linear-gradient(135deg, #fef08a, #eab308); border-radius: 4px; opacity: 0.85; margin-top: 0.5rem; position: relative; z-index: 2;">
+          <div style="position: absolute; top: 0; left: 8px; width: 1px; height: 100%; background: rgba(0,0,0,0.15);"></div>
+          <div style="position: absolute; top: 0; left: 16px; width: 1px; height: 100%; background: rgba(0,0,0,0.15);"></div>
+          <div style="position: absolute; top: 0; left: 24px; width: 1px; height: 100%; background: rgba(0,0,0,0.15);"></div>
+          <div style="position: absolute; top: 8px; left: 0; width: 100%; height: 1px; background: rgba(0,0,0,0.15);"></div>
+          <div style="position: absolute; top: 14px; left: 0; width: 100%; height: 1px; background: rgba(0,0,0,0.15);"></div>
+        </div>
+        <div style="font-family: monospace; font-size: 1.1rem; letter-spacing: 2px; text-shadow: 1px 1px 2px rgba(0,0,0,0.4); margin: 0.5rem 0; z-index: 2;">•••• •••• •••• ${lastDigits}</div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; font-size: 0.65rem; opacity: 0.95; z-index: 2;">
+          <div>
+            <div style="font-size: 0.45rem; opacity: 0.6; text-transform: uppercase; margin-bottom: 2px;">Cardholder</div>
+            <div style="font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">${cardholder.substring(0, 18)}</div>
+          </div>
+          <div>
+            <div style="font-size: 0.45rem; opacity: 0.6; text-transform: uppercase; margin-bottom: 2px;">Expires</div>
+            <div style="font-weight: 600;">12/31</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   async function loadCreditCardsList() {
     const category = el('cc-filter-category').value;
     const cards = await fetchApi('/api/cards');
@@ -1241,7 +1312,7 @@
     if (filtered.length > 0) {
       grid.innerHTML = filtered.map(c => `
         <div class="article-grid-card">
-          <img src="${c.image || 'https://images.unsplash.com/photo-1589758438368-0ad531db3366?auto=format&fit=crop&w=400&q=80'}" alt="Card Cover">
+          ${renderCardImageHtml(c)}
           <div class="article-grid-card-content">
             <span style="font-size:0.68rem; font-weight:800; text-transform:uppercase; color:var(--color-accent);">${c.bank} - ${c.network}</span>
             <h3>${c.name}</h3>
@@ -1529,12 +1600,20 @@
     el('dash-avatar').src = state.user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=facearea&facepad=2&w=256&h=256&q=80';
 
     el('dash-profile-name').value = state.user.name;
-    el('dash-profile-avatar').value = state.user.avatar || '';
     el('dash-profile-bio').value = state.user.bio || '';
+    // Show existing avatar in the file-picker preview
+    if (state.user.avatar) {
+      const prev = el('dash-avatar-preview');
+      if (prev) { prev.src = state.user.avatar; prev.style.display = 'block'; }
+      const lbl = el('dash-avatar-filename');
+      if (lbl) lbl.textContent = 'Current photo loaded';
+    }
+    wireImagePickers();
 
     // Bookmarks list
     const postsList = await fetchApi('/api/posts');
-    const bookmarked = postsList.filter(p => state.user.bookmarks.includes(p.id));
+    const userBookmarks = state.user.bookmarks || [];
+    const bookmarked = postsList.filter(p => userBookmarks.includes(p.id));
     const list = el('dash-bookmarks-grid');
 
     if (bookmarked.length > 0) {
@@ -1580,6 +1659,7 @@
     document.querySelectorAll('.admin-content-body > .admin-subpanel').forEach(p => p.classList.toggle('active', p.id === 'admin-panel-dashboard'));
     await renderAdminDashboard();
     await bindAdminEventHandlers();
+    wireImagePickers();
   }
 
   // ── 1. Dashboard Subpanel ──
@@ -1879,70 +1959,6 @@
         `;
       }
 
-      // 10. BIND QUICK ACTION SHORTCUTS
-      el('quick-act-create-news').onclick = () => {
-        // Open News tab -> Add News Article submenu
-        document.querySelectorAll('.admin-menu-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.admin-menu-btn[data-tab="news"]').forEach(b => b.classList.add('active'));
-        document.querySelectorAll('.admin-content-body > .admin-subpanel').forEach(p => p.classList.remove('active'));
-        el('admin-panel-news').classList.add('active');
-
-        document.querySelectorAll('.news-tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.news-tab-btn[data-news-tab="add"]').forEach(b => b.classList.add('active'));
-        document.querySelectorAll('.news-tab-content').forEach(p => p.style.display = 'none');
-        el('news-tab-panel-add').style.display = 'block';
-
-        el('admin-news-form').reset();
-        el('admin-news-edit-id').value = '';
-        el('admin-news-editor-title').textContent = 'Write New Financial News';
-      };
-
-      el('quick-act-media').onclick = () => {
-        document.querySelectorAll('.admin-menu-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.admin-menu-btn[data-tab="news"]').forEach(b => b.classList.add('active'));
-        document.querySelectorAll('.admin-content-body > .admin-subpanel').forEach(p => p.classList.remove('active'));
-        el('admin-panel-news').classList.add('active');
-
-        document.querySelectorAll('.news-tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.news-tab-btn[data-news-tab="media"]').forEach(b => b.classList.add('active'));
-        document.querySelectorAll('.news-tab-content').forEach(p => p.style.display = 'none');
-        el('news-tab-panel-media').style.display = 'block';
-        renderNewsMediaAdmin();
-      };
-
-      el('quick-act-calculator').onclick = () => {
-        window.location.hash = '#calculators';
-      };
-
-      el('quick-act-glossary').onclick = () => {
-        document.querySelectorAll('.admin-menu-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.admin-menu-btn[data-tab="news"]').forEach(b => b.classList.add('active'));
-        document.querySelectorAll('.admin-content-body > .admin-subpanel').forEach(p => p.classList.remove('active'));
-        el('admin-panel-news').classList.add('active');
-
-        document.querySelectorAll('.news-tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.news-tab-btn[data-news-tab="categories"]').forEach(b => b.classList.add('active'));
-        document.querySelectorAll('.news-tab-content').forEach(p => p.style.display = 'none');
-        el('news-tab-panel-categories').style.display = 'block';
-        renderNewsCategoriesAdmin();
-      };
-
-      el('quick-act-comments').onclick = () => {
-        showToast('Comment moderation queue is empty.');
-      };
-
-      el('quick-act-categories').onclick = () => {
-        document.querySelectorAll('.admin-menu-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.admin-menu-btn[data-tab="news"]').forEach(b => b.classList.add('active'));
-        document.querySelectorAll('.admin-content-body > .admin-subpanel').forEach(p => p.classList.remove('active'));
-        el('admin-panel-news').classList.add('active');
-
-        document.querySelectorAll('.news-tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.news-tab-btn[data-news-tab="categories"]').forEach(b => b.classList.add('active'));
-        document.querySelectorAll('.news-tab-content').forEach(p => p.style.display = 'none');
-        el('news-tab-panel-categories').style.display = 'block';
-        renderNewsCategoriesAdmin();
-      };
 
       // 11. INITIALIZE CHART.JS CHARTS
       renderDashboardCharts(totalVisitors, viewsCount);
@@ -2187,6 +2203,13 @@
     el('admin-card-bank').value = card.bank;
     el('admin-card-network').value = card.network;
     el('admin-card-image').value = card.image || '';
+    // Show existing image preview when editing
+    if (card.image) {
+      const prev = el('card-img-preview');
+      if (prev) { prev.src = card.image; prev.style.display = 'block'; }
+      const fn = el('card-img-filename');
+      if (fn) fn.textContent = 'Current image loaded';
+    }
     el('admin-card-annual-fee').value = card.annualFee;
     el('admin-card-joining-fee').value = card.joiningFee;
     el('admin-card-apr').value = card.apr;
@@ -2218,6 +2241,50 @@
 
 
 
+  // ── Image file picker wiring (card, post, avatar) ──
+  function wireImagePickers() {
+    function makeFilePicker(inputId, hiddenId, previewId, labelId) {
+      const inp = el(inputId);
+      if (!inp) return;
+      inp.onchange = () => {
+        const file = inp.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) { showToast('Only image files allowed.', 'error'); return; }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          if (hiddenId) el(hiddenId).value = ev.target.result;
+          const prev = el(previewId);
+          if (prev) { prev.src = ev.target.result; prev.style.display = 'block'; }
+          const lbl = el(labelId);
+          if (lbl) lbl.textContent = file.name;
+        };
+        reader.readAsDataURL(file);
+      };
+    }
+    makeFilePicker('admin-card-image-upload',  'admin-card-image',  'card-img-preview',   'card-img-filename');
+    makeFilePicker('admin-post-image-upload',  'admin-post-image',  'post-img-preview',   'post-img-filename');
+    makeFilePicker('dash-profile-avatar',      null,                'dash-avatar-preview', 'dash-avatar-filename');
+
+    // For avatar, store base64 in data attribute since the element IS the file input
+    const avatarInp = el('dash-profile-avatar');
+    if (avatarInp) {
+      avatarInp.onchange = () => {
+        const file = avatarInp.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) { showToast('Only image files allowed.', 'error'); return; }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          avatarInp.dataset.b64 = ev.target.result;
+          const prev = el('dash-avatar-preview');
+          if (prev) { prev.src = ev.target.result; prev.style.display = 'block'; }
+          const lbl = el('dash-avatar-filename');
+          if (lbl) lbl.textContent = file.name;
+        };
+        reader.readAsDataURL(file);
+      };
+    }
+  }
+
   // ── Dynamic Admin Event Bindings ──
   async function bindAdminEventHandlers() {
     // ── Articles Editor Events ──
@@ -2247,6 +2314,9 @@
     if (cancelPostBtn) {
       cancelPostBtn.onclick = () => {
         el('admin-post-editor-form-wrap').style.display = 'none';
+        const pPrev = el('post-img-preview'); if (pPrev) { pPrev.src=''; pPrev.style.display='none'; }
+        const pFn = el('post-img-filename'); if (pFn) pFn.textContent='Choose image (PNG/JPG/WEBP)';
+        el('admin-post-image').value = '';
       };
     }
     const postForm = el('admin-post-form');
@@ -2315,6 +2385,9 @@
     if (cancelCardBtn) {
       cancelCardBtn.onclick = () => {
         el('admin-card-editor-form-wrap').style.display = 'none';
+        const cPrev = el('card-img-preview'); if (cPrev) { cPrev.src=''; cPrev.style.display='none'; }
+        const cFn = el('card-img-filename'); if (cFn) cFn.textContent='Choose image (PNG/JPG/WEBP)';
+        el('admin-card-image').value = '';
       };
     }
     const cardForm = el('admin-card-form');
@@ -2753,9 +2826,10 @@
 
       if (news.featuredImage) {
         el('admin-news-image-url').value = news.featuredImage;
-        el('news-image-preview-img').src = news.featuredImage;
-        el('news-image-preview-name').textContent = 'Seeded Cover Link';
-        el('news-image-preview-wrap').style.display = 'flex';
+        const prev = el('news-img-preview');
+        if (prev) { prev.src = news.featuredImage; prev.style.display = 'block'; }
+        const fn = el('news-img-filename');
+        if (fn) fn.textContent = 'Current image loaded';
       }
 
       el('admin-news-editor-title').textContent = 'Edit News Article';
@@ -2872,7 +2946,8 @@
 
         let featuredImage = el('admin-news-image-url').value.trim();
         if (!featuredImage) {
-          featuredImage = el('news-image-preview-img').src;
+          const imgPrev = el('news-img-preview');
+          featuredImage = imgPrev ? imgPrev.src : '';
         }
 
         const tags = tagInput ? tagInput.split(',').map(t => t.trim()) : [];
@@ -2890,7 +2965,9 @@
           // Reset Form
           newsForm.reset();
           el('admin-news-edit-id').value = '';
-          el('news-image-preview-wrap').style.display = 'none';
+          const niPrev = el('news-img-preview'); if (niPrev) { niPrev.src=''; niPrev.style.display='none'; }
+          const niFn = el('news-img-filename'); if (niFn) niFn.textContent='Choose image (PNG/JPG/WEBP)';
+          el('admin-news-image-url').value = '';
           
           // Switch back to listings
           document.querySelectorAll('.news-tab-btn').forEach(b => b.classList.remove('active'));
@@ -2910,7 +2987,9 @@
       cancelBtn.onclick = () => {
         el('admin-news-form').reset();
         el('admin-news-edit-id').value = '';
-        el('news-image-preview-wrap').style.display = 'none';
+        const niPrev2 = el('news-img-preview'); if (niPrev2) { niPrev2.src=''; niPrev2.style.display='none'; }
+        const niFn2 = el('news-img-filename'); if (niFn2) niFn2.textContent='Choose image (PNG/JPG/WEBP)';
+        el('admin-news-image-url').value = '';
 
         // Switch to all listings
         document.querySelectorAll('.news-tab-btn').forEach(b => b.classList.remove('active'));
@@ -2920,70 +2999,25 @@
       };
     }
 
-    // B. Drag & Drop Upload Zone
-    const dropzone = el('news-image-dropzone');
-    const fileInput = el('news-image-file-input');
-    
-    if (dropzone && fileInput) {
-      dropzone.onclick = () => fileInput.click();
+    }
 
-      dropzone.ondragover = (e) => {
-        e.preventDefault();
-        dropzone.style.borderColor = 'var(--color-accent)';
-        dropzone.style.background = 'rgba(0,120,212,0.03)';
-      };
-
-      dropzone.ondragleave = () => {
-        dropzone.style.borderColor = 'var(--color-border)';
-        dropzone.style.background = 'rgba(0,0,0,0.02)';
-      };
-
-      const processFile = (file) => {
-        if (!file.type.startsWith('image/')) {
-          showToast('Only image files are allowed.', 'error');
-          return;
-        }
-        // Simulated compression & preview
+    // B. News image file picker
+    const newsImgUpload = el('admin-news-image-upload');
+    if (newsImgUpload) {
+      newsImgUpload.onchange = () => {
+        const file = newsImgUpload.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) { showToast('Only image files allowed.', 'error'); return; }
         const reader = new FileReader();
         reader.onload = (e) => {
-          el('news-image-preview-img').src = e.target.result;
-          el('news-image-preview-name').textContent = file.name;
-          el('news-image-preview-size').textContent = Math.round(file.size / 1024) + ' KB (Compressed)';
-          el('news-image-preview-wrap').style.display = 'flex';
-          showToast('Image uploaded and auto-compressed successfully.');
+          el('admin-news-image-url').value = e.target.result;
+          const prev = el('news-img-preview');
+          prev.src = e.target.result;
+          prev.style.display = 'block';
+          el('news-img-filename').textContent = file.name;
         };
         reader.readAsDataURL(file);
       };
-
-      dropzone.ondrop = (e) => {
-        e.preventDefault();
-        dropzone.style.borderColor = 'var(--color-border)';
-        dropzone.style.background = 'rgba(0,0,0,0.02)';
-        if (e.dataTransfer.files.length > 0) {
-          processFile(e.dataTransfer.files[0]);
-        }
-      };
-
-      fileInput.onchange = () => {
-        if (fileInput.files.length > 0) {
-          processFile(fileInput.files[0]);
-        }
-      };
-    }
-
-    const previewRemove = el('news-image-preview-remove');
-    if (previewRemove) {
-      previewRemove.onclick = () => {
-        el('news-image-preview-img').src = '';
-        el('news-image-preview-wrap').style.display = 'none';
-        el('admin-news-image-url').value = '';
-        showToast('Image removed.');
-      };
-    }
-
-    const previewReplace = el('news-image-preview-replace');
-    if (previewReplace) {
-      previewReplace.onclick = () => fileInput.click();
     }
 
     // C. Bulk Actions
@@ -3147,15 +3181,7 @@
     // Theme toggle
     el('nav-theme-btn').onclick = toggleTheme;
 
-    // Contact form submission
-    const contactForm = el('contact-form');
-    if (contactForm) {
-      contactForm.onsubmit = (e) => {
-        e.preventDefault();
-        showToast('Your message has been sent successfully. We will get back to you shortly!');
-        contactForm.reset();
-      };
-    }
+
 
     // Dropdown toggle
     el('nav-user-btn').onclick = (e) => {
@@ -3252,7 +3278,8 @@
       profileForm.onsubmit = async (e) => {
         e.preventDefault();
         const name = el('dash-profile-name').value.trim();
-        const avatar = el('dash-profile-avatar').value.trim();
+        const avatarInp = el('dash-profile-avatar');
+        const avatar = (avatarInp.dataset.b64) || state.user.avatar || '';
         const bio = el('dash-profile-bio').value.trim();
         try {
           await fetchApi('/api/auth/profile', {

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
@@ -31,7 +31,6 @@
       <a href="#credit-cards" class="sidebar-link"><span class="icon">💳</span> Credit Cards</a>
       <a href="#investing" class="sidebar-link"><span class="icon">💹</span> Investing</a>
       <a href="#about" class="sidebar-link"><span class="icon">ℹ️</span> About</a>
-      <a href="#contact" class="sidebar-link"><span class="icon">✉️</span> Contact</a>
     </nav>
     
     <div class="sidebar-footer">
@@ -1012,8 +1011,13 @@
                   <input type="text" id="dash-profile-name" required>
                 </div>
                 <div class="field-group">
-                  <label>Avatar image URL</label>
-                  <input type="url" id="dash-profile-avatar">
+                  <label>Profile Photo</label>
+                  <label for="dash-profile-avatar" onclick="document.getElementById('dash-profile-avatar').click(); return false;" style="display:inline-flex; align-items:center; gap:0.75rem; cursor:pointer; padding:0.6rem 1.2rem; background:var(--color-card); border:2px dashed var(--color-accent); border-radius:8px; font-size:0.82rem; font-weight:600; color:var(--color-accent); transition:all 0.2s; user-select:none; margin-top:0.25rem;">
+                    <span style="font-size:1.3rem;">🖼️</span>
+                    <span id="dash-avatar-filename" style="opacity:0.7;">Choose image (PNG/JPG/WEBP)</span>
+                  </label>
+                  <input type="file" id="dash-profile-avatar" accept="image/png,image/jpeg,image/webp" style="opacity:0;position:absolute;width:1px;height:1px;overflow:hidden;" onclick="this.value=null">
+                  <img id="dash-avatar-preview" src="" alt="Preview" style="display:none; margin-top:0.5rem; width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid var(--color-accent);">
                 </div>
               </div>
               <div class="field-group" style="margin-top:1rem; margin-bottom:1.5rem;">
@@ -1072,20 +1076,6 @@
               </div>
             </div>
 
-            <!-- ⚡ Quick Actions row -->
-            <div class="checkout-panel" style="padding:1.25rem; margin-bottom:1.5rem;">
-              <h3 style="margin-top:0; font-size:0.95rem; color:var(--color-accent); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:1rem;">⚡ Quick Actions Shortcuts</h3>
-              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:0.75rem;">
-                <button onclick="window.location.hash='#admin?tab=posts&action=new'" class="btn outline" style="font-size:0.78rem; padding:0.6rem 0.4rem; justify-content:center; text-align:center;"><span style="display:block; font-size:1.25rem; margin-bottom:0.25rem;">📝</span> New Article</button>
-                <button id="quick-act-create-news" class="btn outline" style="font-size:0.78rem; padding:0.6rem 0.4rem; justify-content:center; text-align:center;"><span style="display:block; font-size:1.25rem; margin-bottom:0.25rem;">📰</span> Create News</button>
-                <button id="quick-act-media" class="btn outline" style="font-size:0.78rem; padding:0.6rem 0.4rem; justify-content:center; text-align:center;"><span style="display:block; font-size:1.25rem; margin-bottom:0.25rem;">🖼️</span> Upload Media</button>
-                <button id="quick-act-calculator" class="btn outline" style="font-size:0.78rem; padding:0.6rem 0.4rem; justify-content:center; text-align:center;"><span style="display:block; font-size:1.25rem; margin-bottom:0.25rem;">🧮</span> Add Calculator</button>
-                <button id="quick-act-glossary" class="btn outline" style="font-size:0.78rem; padding:0.6rem 0.4rem; justify-content:center; text-align:center;"><span style="display:block; font-size:1.25rem; margin-bottom:0.25rem;">📔</span> Add Glossary</button>
-                <button id="quick-act-comments" class="btn outline" style="font-size:0.78rem; padding:0.6rem 0.4rem; justify-content:center; text-align:center;"><span style="display:block; font-size:1.25rem; margin-bottom:0.25rem;">💬</span> View Comments</button>
-                <button id="quick-act-categories" class="btn outline" style="font-size:0.78rem; padding:0.6rem 0.4rem; justify-content:center; text-align:center;"><span style="display:block; font-size:1.25rem; margin-bottom:0.25rem;">📂</span> Categories</button>
-                <button onclick="window.location.hash='#admin?tab=settings'" class="btn outline" style="font-size:0.78rem; padding:0.6rem 0.4rem; justify-content:center; text-align:center;"><span style="display:block; font-size:1.25rem; margin-bottom:0.25rem;">⚙️</span> Settings</button>
-              </div>
-            </div>
 
             <!-- GRID ROW 1: Traffic Overview & Active Users -->
             <div style="display:grid; grid-template-columns:3fr 2fr; gap:1.5rem; margin-bottom:1.5rem;">
@@ -1498,32 +1488,15 @@
                     <textarea id="admin-news-content" rows="10" required style="resize:vertical; background:var(--color-bg); border:1px solid var(--color-border); border-radius:8px; padding:0.75rem; color:var(--color-text); font-family:inherit; line-height:1.6;"></textarea>
                   </div>
 
-                  <!-- Drag and Drop Image Upload Wrapper -->
-                  <div class="field-group" style="margin-bottom:1.5rem;">
-                    <label>Featured Image Upload (Drag & Drop or Click)</label>
-                    <div class="upload-drop-zone" id="news-image-dropzone" style="border:2px dashed var(--color-border); border-radius:12px; padding:2rem; text-align:center; cursor:pointer; background:rgba(0,0,0,0.02); transition:all 0.2s;">
-                      <span style="font-size:2rem; display:block; margin-bottom:0.5rem;">📁</span>
-                      <p style="margin:0; font-size:0.88rem; opacity:0.8;">Drag & drop your featured image here, or <span style="color:var(--color-accent); font-weight:700;">browse files</span></p>
-                      <span style="font-size:0.72rem; opacity:0.6; display:block; margin-top:0.25rem;">Supports JPG, PNG, WebP. Compression will be applied automatically.</span>
-                    </div>
-                    <input type="file" id="news-image-file-input" style="display:none;" accept="image/*">
-                    
-                    <div id="news-image-preview-wrap" style="display:none; margin-top:1rem; align-items:center; gap:1rem; border:1px solid var(--color-border); border-radius:8px; padding:1rem;">
-                      <img id="news-image-preview-img" src="" style="width:100px; height:60px; object-fit:cover; border-radius:6px; border:1px solid var(--color-border);">
-                      <div style="flex:1;">
-                        <span style="font-size:0.8rem; display:block; font-weight:700;" id="news-image-preview-name">image.png</span>
-                        <span style="font-size:0.72rem; opacity:0.6;" id="news-image-preview-size">145 KB</span>
-                      </div>
-                      <div style="display:flex; gap:0.5rem;">
-                        <button type="button" class="btn outline" id="news-image-preview-replace" style="padding:0.35rem 0.75rem; font-size:0.72rem;">Replace</button>
-                        <button type="button" class="btn outline" id="news-image-preview-remove" style="padding:0.35rem 0.75rem; font-size:0.72rem; color:var(--color-error); border-color:rgba(239,68,68,0.2);">Remove</button>
-                      </div>
-                    </div>
-                    
-                    <div class="field-group" style="margin-top:1rem;">
-                      <label>Or use Image Unsplash URL</label>
-                      <input type="url" id="admin-news-image-url" placeholder="https://images.unsplash.com/photo-...">
-                    </div>
+                  <div class="field-group" style="margin-top:1rem;">
+                    <label>Cover Image</label>
+                    <label for="admin-news-image-upload" onclick="document.getElementById('admin-news-image-upload').click(); return false;" style="display:inline-flex; align-items:center; gap:0.75rem; cursor:pointer; padding:0.6rem 1.2rem; background:var(--color-card); border:2px dashed var(--color-accent); border-radius:8px; font-size:0.82rem; font-weight:600; color:var(--color-accent); transition:all 0.2s; user-select:none; margin-top:0.25rem;">
+                      <span style="font-size:1.3rem;">🖼️</span>
+                      <span id="news-img-filename" style="opacity:0.7;">Choose image (PNG/JPG/WEBP)</span>
+                    </label>
+                    <input type="file" id="admin-news-image-upload" accept="image/png,image/jpeg,image/webp" style="opacity:0;position:absolute;width:1px;height:1px;overflow:hidden;" onclick="this.value=null">
+                    <input type="hidden" id="admin-news-image-url">
+                    <img id="news-img-preview" src="" alt="Preview" style="display:none; margin-top:0.5rem; width:100%; max-height:140px; object-fit:cover; border-radius:8px; border:1px solid var(--color-border);">
                   </div>
 
                   <div class="form-row" style="margin-bottom:1rem;">
@@ -1677,8 +1650,14 @@
 
                 <div style="margin-bottom:1.25rem;">
                   <div class="field-group">
-                    <label>Cover Image URL</label>
-                    <input type="url" id="admin-post-image" placeholder="https://example.com/image.jpg">
+                    <label>Cover Image</label>
+                    <label for="admin-post-image-upload" onclick="document.getElementById('admin-post-image-upload').click(); return false;" style="display:inline-flex; align-items:center; gap:0.75rem; cursor:pointer; padding:0.6rem 1.2rem; background:var(--color-card); border:2px dashed var(--color-accent); border-radius:8px; font-size:0.82rem; font-weight:600; color:var(--color-accent); transition:all 0.2s; user-select:none; margin-top:0.25rem;">
+                      <span style="font-size:1.3rem;">🖼️</span>
+                      <span id="post-img-filename" style="opacity:0.7;">Choose image (PNG/JPG/WEBP)</span>
+                    </label>
+                    <input type="file" id="admin-post-image-upload" accept="image/png,image/jpeg,image/webp" style="opacity:0;position:absolute;width:1px;height:1px;overflow:hidden;" onclick="this.value=null">
+                    <input type="hidden" id="admin-post-image">
+                    <img id="post-img-preview" src="" alt="Preview" style="display:none; margin-top:0.5rem; width:100%; max-height:140px; object-fit:cover; border-radius:8px; border:1px solid var(--color-border);">
                   </div>
                 </div>
 
@@ -1765,8 +1744,14 @@
                     </select>
                   </div>
                   <div class="field-group">
-                    <label>Card Image URL</label>
-                    <input type="text" id="admin-card-image" placeholder="/public/uploads/default.png">
+                    <label>Card Image</label>
+                    <label for="admin-card-image-upload" onclick="document.getElementById('admin-card-image-upload').click(); return false;" style="display:inline-flex; align-items:center; gap:0.75rem; cursor:pointer; padding:0.6rem 1.2rem; background:var(--color-card); border:2px dashed var(--color-accent); border-radius:8px; font-size:0.82rem; font-weight:600; color:var(--color-accent); transition:all 0.2s; user-select:none; margin-top:0.25rem;">
+                      <span style="font-size:1.3rem;">🖼️</span>
+                      <span id="card-img-filename" style="opacity:0.7;">Choose image (PNG/JPG/WEBP)</span>
+                    </label>
+                    <input type="file" id="admin-card-image-upload" accept="image/png,image/jpeg,image/webp" style="opacity:0;position:absolute;width:1px;height:1px;overflow:hidden;" onclick="this.value=null">
+                    <input type="hidden" id="admin-card-image">
+                    <img id="card-img-preview" src="" alt="Preview" style="display:none; margin-top:0.5rem; width:100%; max-height:120px; object-fit:cover; border-radius:8px; border:1px solid var(--color-border);">
                   </div>
                 </div>
 
@@ -2238,35 +2223,6 @@
       </div>
     </section>
 
-    <!-- ── 16. CONTACT VIEW ─────────────────────── -->
-    <section id="view-contact" class="app-view">
-      <div class="view-header-title">
-        <h1>✉️ Contact Us</h1>
-        <p>Have questions, feedback, or compliance inquiries? Drop us a line below.</p>
-      </div>
-      <div class="checkout-panel" style="max-width:600px; margin-top:1.5rem;">
-        <form id="contact-form" style="display:flex; flex-direction:column; gap:1.25rem;">
-          <div class="field-group">
-            <label>Full Name</label>
-            <input type="text" id="contact-name" required placeholder="Your Name" style="background:var(--color-bg); border:1px solid var(--color-border); border-radius:8px; padding:0.75rem; color:var(--color-text);">
-          </div>
-          <div class="field-group">
-            <label>Email Address</label>
-            <input type="email" id="contact-email" required placeholder="name@email.com" style="background:var(--color-bg); border:1px solid var(--color-border); border-radius:8px; padding:0.75rem; color:var(--color-text);">
-          </div>
-          <div class="field-group">
-            <label>Subject</label>
-            <input type="text" id="contact-subject" required placeholder="How can we help?" style="background:var(--color-bg); border:1px solid var(--color-border); border-radius:8px; padding:0.75rem; color:var(--color-text);">
-          </div>
-          <div class="field-group">
-            <label>Message</label>
-            <textarea id="contact-message" required rows="5" placeholder="Enter your message details here..." style="background:var(--color-bg); border:1px solid var(--color-border); border-radius:8px; padding:0.75rem; color:var(--color-text); resize:none; font-family:inherit;"></textarea>
-          </div>
-          <button type="submit" class="btn primary w-full" style="padding:0.75rem;">Send Message</button>
-        </form>
-      </div>
-    </section>
-
   </main>
 
   <!-- AdSense Bottom Placement banner -->
@@ -2299,7 +2255,6 @@
       <div class="footer-links-col">
         <h4>Assistance</h4>
         <a href="#about">About Us</a>
-        <a href="#contact">Contact Us</a>
         <a href="#tools">Risk Profile Quiz</a>
         <a href="#glossary">Terminology Glossary</a>
       </div>
@@ -2344,3 +2299,6 @@
   <script src="src/js/main.js"></script>
 </body>
 </html>
+
+
+
