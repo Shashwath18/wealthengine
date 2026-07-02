@@ -168,6 +168,16 @@
         const filter = status === 'all' ? '' : 'status=eq.Published';
         targetUrl = `${SUPABASE_URL}/rest/v1/posts?select=*${filter ? '&' + filter : ''}`;
       } else if (method === 'POST') {
+        bodyObj.id = bodyObj.id || ("post-" + Math.random().toString(36).substring(2, 10));
+        bodyObj.slug = bodyObj.slug || bodyObj.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        bodyObj.author = bodyObj.author || (state.user ? state.user.email : 'shashwaththangarajan@gmail.com');
+        bodyObj.authorName = bodyObj.authorName || (state.user ? (state.user.name || state.user.email) : 'WealthEngine Expert');
+        bodyObj.views = bodyObj.views !== undefined ? bodyObj.views : 0;
+        bodyObj.likes = bodyObj.likes !== undefined ? bodyObj.likes : 0;
+        bodyObj.claps = bodyObj.claps !== undefined ? bodyObj.claps : 0;
+        bodyObj.readingTime = bodyObj.readingTime || Math.max(1, Math.round((bodyObj.content || '').split(/\s+/).length / 200));
+        bodyObj.placedAt = bodyObj.placedAt || new Date().toISOString();
+        
         fetchOptions.body = JSON.stringify(bodyObj);
         targetUrl = `${SUPABASE_URL}/rest/v1/posts`;
       }
@@ -190,6 +200,14 @@
         const filter = status === 'all' ? '' : 'status=eq.Publish';
         targetUrl = `${SUPABASE_URL}/rest/v1/news?select=*${filter ? '&' + filter : ''}`;
       } else if (method === 'POST') {
+        bodyObj.id = bodyObj.id || ("news-" + Math.random().toString(36).substring(2, 10));
+        bodyObj.slug = bodyObj.slug || bodyObj.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        bodyObj.author = bodyObj.author || (state.user ? (state.user.name || state.user.email) : 'WealthEngine News Desk');
+        bodyObj.views = bodyObj.views !== undefined ? bodyObj.views : 0;
+        bodyObj.likes = bodyObj.likes !== undefined ? bodyObj.likes : 0;
+        bodyObj.readingTime = bodyObj.readingTime || Math.max(1, Math.round((bodyObj.content || '').split(/\s+/).length / 200));
+        bodyObj.publishDate = bodyObj.publishDate || new Date().toISOString();
+        
         fetchOptions.body = JSON.stringify(bodyObj);
         targetUrl = `${SUPABASE_URL}/rest/v1/news`;
       }
@@ -225,6 +243,9 @@
       if (method === 'GET') {
         targetUrl = `${SUPABASE_URL}/rest/v1/cards?select=*`;
       } else if (method === 'POST') {
+        bodyObj.id = bodyObj.id || ("card-" + Math.random().toString(36).substring(2, 10));
+        bodyObj.slug = bodyObj.slug || bodyObj.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        
         fetchOptions.body = JSON.stringify(bodyObj);
         targetUrl = `${SUPABASE_URL}/rest/v1/cards`;
       } else if (method === 'PUT') {
@@ -318,7 +339,16 @@
       return { token, user: { email: user.email, name: user.name, role: user.role } };
     } else if (path === '/api/auth/me') {
       if (state.token) {
-        const decoded = JSON.parse(atob(state.token));
+        let decoded;
+        try {
+          const parts = state.token.split('.');
+          const payload = parts.length === 3 ? parts[1] : state.token;
+          decoded = JSON.parse(atob(payload));
+        } catch (e) {
+          localStorage.removeItem('wealthengine_token');
+          state.token = null;
+          throw new Error('Unauthorized');
+        }
         const userRes = await fetch(`${SUPABASE_URL}/rest/v1/users?email=eq.${decoded.email}&select=*`, { headers });
         const users = await userRes.json().catch(() => []);
         if (users && users.length > 0) {
