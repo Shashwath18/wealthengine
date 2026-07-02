@@ -2262,14 +2262,15 @@
   <!-- Full Screen Disclaimer Popup Modal -->
   <div id="disclaimer-modal-overlay" class="disclaimer-modal-overlay" style="display:none;">
     <div class="disclaimer-modal-box" role="dialog" aria-modal="true" aria-labelledby="disclaimer-title">
-      <div class="disclaimer-modal-header">
-        <h2 id="disclaimer-title">⚠️ DISCLAIMER</h2>
+      <div class="disclaimer-modal-header" style="background: rgba(239, 68, 68, 0.08); border-bottom: 1px solid var(--color-border);">
+        <h2 id="disclaimer-title" style="color: #EF4444; font-weight: 800; font-size: 1.5rem; letter-spacing: 0.5px; margin: 0;">⚠️ IMPORTANT DISCLAIMER</h2>
       </div>
       <div class="disclaimer-modal-content">
-        <p style="margin-bottom: 1.25rem; line-height: 1.7;">This website is created for educational and informational purposes only. We do not provide financial, investment, legal, gambling, betting, or professional advice. All news, articles, market information, predictions, and opinions are provided for general information only.</p>
-        <p style="margin-bottom: 1.25rem; line-height: 1.7;">Users must conduct their own research before making any financial or investment decisions. We are not responsible for any loss, damage, or consequences resulting from the use of information on this website.</p>
-        <p style="margin-bottom: 1.25rem; line-height: 1.7;">Some content may include third-party links or advertisements. We do not endorse or guarantee any external websites, products, or services.</p>
-        <p style="margin-bottom: 1.25rem; line-height: 1.7; font-weight: 600;">By clicking 'I Agree', you acknowledge that you have read, understood, and accepted this disclaimer and agree to use this website at your own risk.</p>
+        <p style="margin-bottom: 1.25rem; line-height: 1.7;">This website is provided for educational and informational purposes only. The content published on this website, including news, articles, opinions, stock information, financial data, market analysis, and other materials, should not be considered financial, investment, legal, tax, or professional advice.</p>
+        <p style="margin-bottom: 1.25rem; line-height: 1.7;">Users must conduct their own independent research and consult qualified professionals before making any financial or investment decisions. Investments in stocks, mutual funds, cryptocurrencies, commodities, or any other financial instruments involve risk, including the possible loss of capital.</p>
+        <p style="margin-bottom: 1.25rem; line-height: 1.7;">We make reasonable efforts to keep information accurate and up to date, but we do not guarantee the accuracy, completeness, reliability, or timeliness of any content. We are not liable for any direct, indirect, incidental, or consequential losses arising from the use of this website.</p>
+        <p style="margin-bottom: 1.25rem; line-height: 1.7;">This website may display third-party advertisements, affiliate links, or links to external websites. We do not control or endorse the content, products, services, or policies of third-party websites.</p>
+        <p style="margin-bottom: 1.25rem; line-height: 1.7; font-weight: 600;">By clicking 'I AGREE & CONTINUE', you acknowledge that you have read, understood, and accepted this disclaimer and agree to use this website entirely at your own risk.</p>
       </div>
       <div class="disclaimer-modal-footer">
         <label class="disclaimer-checkbox-container" style="display:flex; align-items:center; gap:0.5rem; margin-bottom:1.5rem; cursor:pointer; font-size:0.9rem;">
@@ -2277,8 +2278,8 @@
           <span>I have read and agree to the Disclaimer.</span>
         </label>
         <div class="disclaimer-actions" style="display:flex; gap:1rem; flex-wrap:wrap;">
-          <button id="btn-disclaimer-agree" class="btn primary" disabled style="flex:1; padding:0.8rem; font-weight:bold; font-size:0.95rem;">I AGREE & CONTINUE</button>
-          <button id="btn-disclaimer-leave" class="btn secondary" style="padding:0.8rem; font-size:0.95rem; background:rgba(255,255,255,0.06); border:1px solid var(--color-border); cursor:pointer;">LEAVE WEBSITE</button>
+          <button id="btn-disclaimer-agree" class="btn" disabled style="flex:1; padding:0.8rem; font-weight:bold; font-size:0.95rem; background:#10b981; color:white; border:none; border-radius:8px; cursor:pointer; opacity:0.5; transition:opacity 0.2s;">I AGREE & CONTINUE</button>
+          <button id="btn-disclaimer-leave" class="btn" style="flex:1; padding:0.8rem; font-weight:bold; font-size:0.95rem; background:#ef4444; color:white; border:none; border-radius:8px; cursor:pointer; transition:background 0.2s;">LEAVE WEBSITE</button>
         </div>
       </div>
     </div>
