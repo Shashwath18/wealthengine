@@ -992,7 +992,21 @@
             <button class="dash-menu-btn active" data-tab="bookmarks">🔖 Bookmarked Guides</button>
             <button class="dash-menu-btn" data-tab="profile">👤 Edit Profiles</button>
             <button class="dash-menu-btn" data-tab="security">🔒 Password settings</button>
-              <div class="field-group" style="margin-bottom:1rem;">
+          </nav>
+        </aside>
+
+        <div class="dashboard-content-body">
+          <div id="dash-tab-bookmarks" class="dash-tab-panel active">
+            <h2>Bookmarked Articles</h2>
+            <div class="articles-grid-layout" id="dash-bookmarks-grid">
+              <!-- Bookmarks list -->
+            </div>
+          </div>
+          <div id="dash-tab-profile" class="dash-tab-panel">
+            <h2>Edit Profile Details</h2>
+            <form id="dash-profile-form" class="checkout-panel">
+              <div class="form-row">
+                <div class="field-group">
                   <label>Full Name</label>
                   <input type="text" id="dash-profile-name" required>
                 </div>

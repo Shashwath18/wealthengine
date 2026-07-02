@@ -2996,8 +2996,6 @@
       };
     }
 
-    }
-
     // B. News image file picker
     const newsImgUpload = el('admin-news-image-upload');
     if (newsImgUpload) {
