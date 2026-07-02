@@ -48,7 +48,10 @@ CREATE TABLE public.posts (
     "likes" INTEGER DEFAULT 0,
     "claps" INTEGER DEFAULT 0,
     "readingTime" INTEGER DEFAULT 1,
-    "placedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    "placedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    "scheduledAt" TIMESTAMP WITH TIME ZONE,
+    "seoTitle" TEXT,
+    "seoDesc" TEXT
 );
 
 -- Create news table
