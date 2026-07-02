@@ -30,6 +30,8 @@
       <a href="#calculators" class="sidebar-link"><span class="icon">🧮</span> Calculators</a>
       <a href="#credit-cards" class="sidebar-link"><span class="icon">💳</span> Credit Cards</a>
       <a href="#investing" class="sidebar-link"><span class="icon">💹</span> Investing</a>
+      <a href="#about" class="sidebar-link"><span class="icon">ℹ️</span> About</a>
+      <a href="#contact" class="sidebar-link"><span class="icon">✉️</span> Contact</a>
     </nav>
     
     <div class="sidebar-footer">
@@ -2238,6 +2240,50 @@
         
         <h3 style="margin-bottom:1rem; color:var(--color-accent);">2. Third-Party Advertising Cookies</h3>
         <p style="margin-bottom:1.5rem;">Google AdSense places cookies on our site to deliver targeted marketing ads. You can disable cookies directly in your browser preferences.</p>
+    <!-- ── 15. ABOUT VIEW ───────────────────────── -->
+    <section id="view-about" class="app-view">
+      <div class="view-header-title">
+        <h1>ℹ️ About WealthEngine</h1>
+        <p>Learn more about our mission, vision, and team dedicating their efforts to financial literacy.</p>
+      </div>
+      <div class="checkout-panel" style="line-height:1.75; font-size:0.95rem;">
+        <h3 style="margin-bottom:1rem; color:var(--color-accent);">Our Mission</h3>
+        <p style="margin-bottom:1.5rem;">WealthEngine was founded with a simple yet powerful mission: to democratize financial literacy and empower individuals to make smart, data-driven investing decisions. We believe that systematic wealth creation shouldn't be a privilege reserved for a few, but an accessible tool for everyone.</p>
+
+        <h3 style="margin-bottom:1rem; color:var(--color-accent);">Core Philosophy</h3>
+        <p style="margin-bottom:1.5rem;">We advocate for compound growth, smart asset allocation, and risk management through diversification. Our interactive calculators, curated articles, and terminology glossaries are built to break down complex financial concepts into actionable insights.</p>
+
+        <h3 style="margin-bottom:1rem; color:var(--color-accent);">Our Platform</h3>
+        <p>Built with modern SPA architecture, WealthEngine runs completely serverless and AdSense-compliant, providing free financial tools, real-time calculators, and up-to-date financial updates without distracting promotions.</p>
+      </div>
+    </section>
+
+    <!-- ── 16. CONTACT VIEW ─────────────────────── -->
+    <section id="view-contact" class="app-view">
+      <div class="view-header-title">
+        <h1>✉️ Contact Us</h1>
+        <p>Have questions, feedback, or compliance inquiries? Drop us a line below.</p>
+      </div>
+      <div class="checkout-panel" style="max-width:600px; margin-top:1.5rem;">
+        <form id="contact-form" style="display:flex; flex-direction:column; gap:1.25rem;">
+          <div class="field-group">
+            <label>Full Name</label>
+            <input type="text" id="contact-name" required placeholder="Your Name" style="background:var(--color-bg); border:1px solid var(--color-border); border-radius:8px; padding:0.75rem; color:var(--color-text);">
+          </div>
+          <div class="field-group">
+            <label>Email Address</label>
+            <input type="email" id="contact-email" required placeholder="name@email.com" style="background:var(--color-bg); border:1px solid var(--color-border); border-radius:8px; padding:0.75rem; color:var(--color-text);">
+          </div>
+          <div class="field-group">
+            <label>Subject</label>
+            <input type="text" id="contact-subject" required placeholder="How can we help?" style="background:var(--color-bg); border:1px solid var(--color-border); border-radius:8px; padding:0.75rem; color:var(--color-text);">
+          </div>
+          <div class="field-group">
+            <label>Message</label>
+            <textarea id="contact-message" required rows="5" placeholder="Enter your message details here..." style="background:var(--color-bg); border:1px solid var(--color-border); border-radius:8px; padding:0.75rem; color:var(--color-text); resize:none; font-family:inherit;"></textarea>
+          </div>
+          <button type="submit" class="btn primary w-full" style="padding:0.75rem;">Send Message</button>
+        </form>
       </div>
     </section>
 
@@ -2272,6 +2318,8 @@
       </div>
       <div class="footer-links-col">
         <h4>Assistance</h4>
+        <a href="#about">About Us</a>
+        <a href="#contact">Contact Us</a>
         <a href="#tools">Risk Profile Quiz</a>
         <a href="#glossary">Terminology Glossary</a>
       </div>

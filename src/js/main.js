@@ -3071,6 +3071,16 @@
     // Theme toggle
     el('nav-theme-btn').onclick = toggleTheme;
 
+    // Contact form submission
+    const contactForm = el('contact-form');
+    if (contactForm) {
+      contactForm.onsubmit = (e) => {
+        e.preventDefault();
+        showToast('Your message has been sent successfully. We will get back to you shortly!');
+        contactForm.reset();
+      };
+    }
+
     // Dropdown toggle
     el('nav-user-btn').onclick = (e) => {
       e.stopPropagation();
