@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8">
@@ -992,31 +992,14 @@
             <button class="dash-menu-btn active" data-tab="bookmarks">🔖 Bookmarked Guides</button>
             <button class="dash-menu-btn" data-tab="profile">👤 Edit Profiles</button>
             <button class="dash-menu-btn" data-tab="security">🔒 Password settings</button>
-          </nav>
-        </aside>
-
-        <div class="dashboard-content-body">
-          <div id="dash-tab-bookmarks" class="dash-tab-panel active">
-            <h2>Bookmarked Articles</h2>
-            <div class="articles-grid-layout" id="dash-bookmarks-grid">
-              <!-- Bookmarks list -->
-            </div>
-          </div>
-          <div id="dash-tab-profile" class="dash-tab-panel">
-            <h2>Edit Profile Details</h2>
-            <form id="dash-profile-form" class="checkout-panel">
-              <div class="form-row">
-                <div class="field-group">
+              <div class="field-group" style="margin-bottom:1rem;">
                   <label>Full Name</label>
                   <input type="text" id="dash-profile-name" required>
                 </div>
                 <div class="field-group">
                   <label>Profile Photo</label>
-                  <label for="dash-profile-avatar" onclick="document.getElementById('dash-profile-avatar').click(); return false;" style="display:inline-flex; align-items:center; gap:0.75rem; cursor:pointer; padding:0.6rem 1.2rem; background:var(--color-card); border:2px dashed var(--color-accent); border-radius:8px; font-size:0.82rem; font-weight:600; color:var(--color-accent); transition:all 0.2s; user-select:none; margin-top:0.25rem;">
-                    <span style="font-size:1.3rem;">🖼️</span>
-                    <span id="dash-avatar-filename" style="opacity:0.7;">Choose image (PNG/JPG/WEBP)</span>
-                  </label>
-                  <input type="file" id="dash-profile-avatar" accept="image/png,image/jpeg,image/webp" style="opacity:0;position:absolute;width:1px;height:1px;overflow:hidden;" onclick="this.value=null">
+                  <button type="button" id="dash-avatar-btn" style="display:inline-flex;align-items:center;gap:0.6rem;cursor:pointer;padding:0.55rem 1.1rem;background:var(--color-card);border:2px dashed var(--color-accent);border-radius:8px;font-size:0.82rem;font-weight:600;color:var(--color-accent);">🖼️ <span id="dash-avatar-filename">Choose Photo (PNG/JPG/WEBP)</span></button>
+                  <input type="file" id="dash-profile-avatar" accept="image/png,image/jpeg,image/webp" style="display:none;">
                   <img id="dash-avatar-preview" src="" alt="Preview" style="display:none; margin-top:0.5rem; width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid var(--color-accent);">
                 </div>
               </div>
@@ -1490,11 +1473,8 @@
 
                   <div class="field-group" style="margin-top:1rem;">
                     <label>Cover Image</label>
-                    <label for="admin-news-image-upload" onclick="document.getElementById('admin-news-image-upload').click(); return false;" style="display:inline-flex; align-items:center; gap:0.75rem; cursor:pointer; padding:0.6rem 1.2rem; background:var(--color-card); border:2px dashed var(--color-accent); border-radius:8px; font-size:0.82rem; font-weight:600; color:var(--color-accent); transition:all 0.2s; user-select:none; margin-top:0.25rem;">
-                      <span style="font-size:1.3rem;">🖼️</span>
-                      <span id="news-img-filename" style="opacity:0.7;">Choose image (PNG/JPG/WEBP)</span>
-                    </label>
-                    <input type="file" id="admin-news-image-upload" accept="image/png,image/jpeg,image/webp" style="opacity:0;position:absolute;width:1px;height:1px;overflow:hidden;" onclick="this.value=null">
+                    <button type="button" id="news-img-btn" style="display:inline-flex;align-items:center;gap:0.6rem;cursor:pointer;padding:0.55rem 1.1rem;background:var(--color-card);border:2px dashed var(--color-accent);border-radius:8px;font-size:0.82rem;font-weight:600;color:var(--color-accent);">🖼️ <span id="news-img-filename">Choose Image (PNG/JPG/WEBP)</span></button>
+                    <input type="file" id="admin-news-image-upload" accept="image/png,image/jpeg,image/webp" style="display:none;">
                     <input type="hidden" id="admin-news-image-url">
                     <img id="news-img-preview" src="" alt="Preview" style="display:none; margin-top:0.5rem; width:100%; max-height:140px; object-fit:cover; border-radius:8px; border:1px solid var(--color-border);">
                   </div>
@@ -1651,11 +1631,8 @@
                 <div style="margin-bottom:1.25rem;">
                   <div class="field-group">
                     <label>Cover Image</label>
-                    <label for="admin-post-image-upload" onclick="document.getElementById('admin-post-image-upload').click(); return false;" style="display:inline-flex; align-items:center; gap:0.75rem; cursor:pointer; padding:0.6rem 1.2rem; background:var(--color-card); border:2px dashed var(--color-accent); border-radius:8px; font-size:0.82rem; font-weight:600; color:var(--color-accent); transition:all 0.2s; user-select:none; margin-top:0.25rem;">
-                      <span style="font-size:1.3rem;">🖼️</span>
-                      <span id="post-img-filename" style="opacity:0.7;">Choose image (PNG/JPG/WEBP)</span>
-                    </label>
-                    <input type="file" id="admin-post-image-upload" accept="image/png,image/jpeg,image/webp" style="opacity:0;position:absolute;width:1px;height:1px;overflow:hidden;" onclick="this.value=null">
+                    <button type="button" id="post-img-btn" style="display:inline-flex;align-items:center;gap:0.6rem;cursor:pointer;padding:0.55rem 1.1rem;background:var(--color-card);border:2px dashed var(--color-accent);border-radius:8px;font-size:0.82rem;font-weight:600;color:var(--color-accent);">🖼️ <span id="post-img-filename">Choose Image (PNG/JPG/WEBP)</span></button>
+                    <input type="file" id="admin-post-image-upload" accept="image/png,image/jpeg,image/webp" style="display:none;">
                     <input type="hidden" id="admin-post-image">
                     <img id="post-img-preview" src="" alt="Preview" style="display:none; margin-top:0.5rem; width:100%; max-height:140px; object-fit:cover; border-radius:8px; border:1px solid var(--color-border);">
                   </div>
@@ -1745,11 +1722,8 @@
                   </div>
                   <div class="field-group">
                     <label>Card Image</label>
-                    <label for="admin-card-image-upload" onclick="document.getElementById('admin-card-image-upload').click(); return false;" style="display:inline-flex; align-items:center; gap:0.75rem; cursor:pointer; padding:0.6rem 1.2rem; background:var(--color-card); border:2px dashed var(--color-accent); border-radius:8px; font-size:0.82rem; font-weight:600; color:var(--color-accent); transition:all 0.2s; user-select:none; margin-top:0.25rem;">
-                      <span style="font-size:1.3rem;">🖼️</span>
-                      <span id="card-img-filename" style="opacity:0.7;">Choose image (PNG/JPG/WEBP)</span>
-                    </label>
-                    <input type="file" id="admin-card-image-upload" accept="image/png,image/jpeg,image/webp" style="opacity:0;position:absolute;width:1px;height:1px;overflow:hidden;" onclick="this.value=null">
+                    <button type="button" id="card-img-btn" style="display:inline-flex;align-items:center;gap:0.6rem;cursor:pointer;padding:0.55rem 1.1rem;background:var(--color-card);border:2px dashed var(--color-accent);border-radius:8px;font-size:0.82rem;font-weight:600;color:var(--color-accent);">🖼️ <span id="card-img-filename">Choose Image (PNG/JPG/WEBP)</span></button>
+                    <input type="file" id="admin-card-image-upload" accept="image/png,image/jpeg,image/webp" style="display:none;">
                     <input type="hidden" id="admin-card-image">
                     <img id="card-img-preview" src="" alt="Preview" style="display:none; margin-top:0.5rem; width:100%; max-height:120px; object-fit:cover; border-radius:8px; border:1px solid var(--color-border);">
                   </div>
@@ -2299,6 +2273,8 @@
   <script src="src/js/main.js"></script>
 </body>
 </html>
+
+
 
 
 

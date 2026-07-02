@@ -2243,46 +2243,43 @@
 
   // ── Image file picker wiring (card, post, avatar) ──
   function wireImagePickers() {
-    function makeFilePicker(inputId, hiddenId, previewId, labelId) {
+    // Helper: wire a button click → open file input, and file input change → preview
+    function makePicker(btnId, inputId, hiddenId, previewId, filenameId) {
+      const btn = el(btnId);
       const inp = el(inputId);
       if (!inp) return;
+
+      // Button click → open file dialog
+      if (btn) {
+        btn.onclick = (e) => {
+          e.preventDefault();
+          inp.click();
+        };
+      }
+
+      // File selected → read as base64, show preview, update label
       inp.onchange = () => {
         const file = inp.files[0];
         if (!file) return;
         if (!file.type.startsWith('image/')) { showToast('Only image files allowed.', 'error'); return; }
         const reader = new FileReader();
         reader.onload = (ev) => {
-          if (hiddenId) el(hiddenId).value = ev.target.result;
+          const b64 = ev.target.result;
+          if (hiddenId) { const h = el(hiddenId); if (h) h.value = b64; }
+          if (inputId === 'dash-profile-avatar') inp.dataset.b64 = b64; // avatar uses dataset
           const prev = el(previewId);
-          if (prev) { prev.src = ev.target.result; prev.style.display = 'block'; }
-          const lbl = el(labelId);
-          if (lbl) lbl.textContent = file.name;
+          if (prev) { prev.src = b64; prev.style.display = 'block'; }
+          const fn = el(filenameId);
+          if (fn) fn.textContent = file.name;
         };
         reader.readAsDataURL(file);
       };
     }
-    makeFilePicker('admin-card-image-upload',  'admin-card-image',  'card-img-preview',   'card-img-filename');
-    makeFilePicker('admin-post-image-upload',  'admin-post-image',  'post-img-preview',   'post-img-filename');
-    makeFilePicker('dash-profile-avatar',      null,                'dash-avatar-preview', 'dash-avatar-filename');
 
-    // For avatar, store base64 in data attribute since the element IS the file input
-    const avatarInp = el('dash-profile-avatar');
-    if (avatarInp) {
-      avatarInp.onchange = () => {
-        const file = avatarInp.files[0];
-        if (!file) return;
-        if (!file.type.startsWith('image/')) { showToast('Only image files allowed.', 'error'); return; }
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          avatarInp.dataset.b64 = ev.target.result;
-          const prev = el('dash-avatar-preview');
-          if (prev) { prev.src = ev.target.result; prev.style.display = 'block'; }
-          const lbl = el('dash-avatar-filename');
-          if (lbl) lbl.textContent = file.name;
-        };
-        reader.readAsDataURL(file);
-      };
-    }
+    makePicker('card-img-btn',    'admin-card-image-upload', 'admin-card-image', 'card-img-preview',    'card-img-filename');
+    makePicker('post-img-btn',    'admin-post-image-upload', 'admin-post-image', 'post-img-preview',    'post-img-filename');
+    makePicker('news-img-btn',    'admin-news-image-upload', 'admin-news-image-url', 'news-img-preview','news-img-filename');
+    makePicker('dash-avatar-btn', 'dash-profile-avatar',     null,               'dash-avatar-preview', 'dash-avatar-filename');
   }
 
   // ── Dynamic Admin Event Bindings ──
