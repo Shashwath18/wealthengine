@@ -3040,6 +3040,34 @@
   // ── Global Document Event Bindings ───────────
   function bindEvents() {
     bindNewsEvents();
+    
+    // Mobile sidebar toggle
+    const sidebar = el('app-sidebar');
+    const mobToggle = el('mobile-sidebar-toggle');
+    const mobClose = el('mobile-sidebar-close');
+
+    if (mobToggle && sidebar) {
+      mobToggle.onclick = (e) => {
+        e.stopPropagation();
+        sidebar.classList.toggle('mobile-open');
+      };
+    }
+    if (mobClose && sidebar) {
+      mobClose.onclick = () => {
+        sidebar.classList.remove('mobile-open');
+      };
+    }
+    document.addEventListener('click', (e) => {
+      if (sidebar && sidebar.classList.contains('mobile-open') && !sidebar.contains(e.target) && e.target !== mobToggle) {
+        sidebar.classList.remove('mobile-open');
+      }
+    });
+    document.querySelectorAll('.sidebar-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (sidebar) sidebar.classList.remove('mobile-open');
+      });
+    });
+
     // Theme toggle
     el('nav-theme-btn').onclick = toggleTheme;
 

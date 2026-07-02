@@ -27,7 +27,8 @@ CREATE TABLE public.users (
 CREATE TABLE public.categories (
     "id" TEXT PRIMARY KEY,
     "name" TEXT NOT NULL,
-    "description" TEXT
+    "description" TEXT,
+    "slug" TEXT
 );
 
 -- Create posts table
@@ -127,7 +128,7 @@ CREATE TABLE public.subscribers (
 -- Create settings table
 CREATE TABLE public.settings (
     "id" TEXT PRIMARY KEY DEFAULT 'default',
-    "siteName" TEXT DEFAULT 'FinVest Hub',
+    "siteName" TEXT DEFAULT 'WealthEngine',
     "tagline" TEXT,
     "contactEmail" TEXT,
     "smtpHost" TEXT,

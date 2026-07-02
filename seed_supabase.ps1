@@ -41,17 +41,10 @@ foreach ($t in $tables) {
         continue
     }
     
-    # In settings.json, it might be a single object or an array. PostgREST inserts prefer an array of objects.
-    # Let's parse it first to verify it's formatted as an array.
-    $parsed = ConvertFrom-Json $content
-    $array = @()
-    if ($parsed -is [Array]) {
-        $array = $parsed
-    } else {
-        $array = @($parsed)
+    $jsonToSend = $content.Trim()
+    if (-not $jsonToSend.StartsWith("[")) {
+        $jsonToSend = "[$jsonToSend]"
     }
-    
-    $jsonToSend = ConvertTo-Json $array -Depth 10 -Compress
     
     try {
         $uri = "$supabaseUrl/rest/v1/$tableName"
@@ -59,13 +52,13 @@ foreach ($t in $tables) {
         $response = Invoke-WebRequest -Uri $uri -Headers $headers -Method Post -Body $jsonToSend -UseBasicParsing
         Write-Output "[SUCCESS] Seeded '$tableName'. Status code: $($response.StatusCode)"
     } catch {
-        Write-Error "Failed to seed table '$tableName'. Error: $_"
         if ($_.Exception.Response) {
             $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
             $body = $reader.ReadToEnd()
             $reader.Close()
-            Write-Output "Response body: $body"
+            Write-Host "RESPONSE BODY ERROR: $body" -ForegroundColor Red
         }
+        Write-Error "Failed to seed table '$tableName'. Error: $_"
     }
 }
 Write-Output "=================================================="

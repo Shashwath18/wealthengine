@@ -137,7 +137,7 @@ $null = Get-DbFile "settings" (ConvertTo-Json $defaultSettings -Depth 5 -Compres
 $defaultCards = @(
     @{
         id = "card-1"
-        name = "FinVest Rewards Elite"
+        name = "WealthEngine Rewards Elite"
         bank = "Apex Bank"
         network = "Visa"
         image = "/public/uploads/rewards_elite.png"
@@ -170,9 +170,9 @@ $defaultCards = @(
         documents = "PAN card, Aadhaar card, Form 16 / Salary slips"
         howToApply = "Apply online via Apex Bank web portal or visit branch."
         website = "https://example.com/apex-rewards"
-        seoTitle = "FinVest Rewards Elite Credit Card - Apex Bank"
-        seoDesc = "Apply for FinVest Rewards Elite credit card. High rewards on dining and travel."
-        slug = "finvest-rewards-elite"
+        seoTitle = "WealthEngine Rewards Elite Credit Card - Apex Bank"
+        seoDesc = "Apply for WealthEngine Rewards Elite credit card. High rewards on dining and travel."
+        slug = "wealthengine-rewards-elite"
     },
     @{
         id = "card-2"
@@ -223,11 +223,11 @@ $defaultUsers = @(
     @{
         id = "usr-1"
         email = "shashwaththangarajan@gmail.com"
-        name = "FinVest Expert"
+        name = "WealthEngine Expert"
         passwordHash = $adminHash
         passwordSalt = $adminSalt
         role = "Super Admin"
-        bio = "Chief Finance Curator and Principal Administrator at FinVest Hub."
+        bio = "Chief Finance Curator and Principal Administrator at WealthEngine."
         avatar = "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=150&q=80"
         bookmarks = @()
         likes = @()
@@ -247,7 +247,7 @@ $defaultPosts = @(
         status = "Published"
         featuredImage = "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=800&q=80"
         author = "shashwaththangarajan@gmail.com"
-        authorName = "FinVest Expert"
+        authorName = "WealthEngine Expert"
         categoryId = "cat-2"
         tags = @("Investing", "SIP")
         views = 284
@@ -265,7 +265,7 @@ $defaultPosts = @(
         status = "Published"
         featuredImage = "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=800&q=80"
         author = "shashwaththangarajan@gmail.com"
-        authorName = "FinVest Expert"
+        authorName = "WealthEngine Expert"
         categoryId = "cat-1"
         tags = @("Personal Finance", "Savings")
         views = 192
@@ -700,7 +700,7 @@ while ($listener.IsListening) {
                             featuredImage = if ($null -ne $newsObj.featuredImage -and $newsObj.featuredImage -ne "") { $newsObj.featuredImage } else { "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=800&q=80" }
                             category = $newsObj.category
                             tags = if ($null -ne $newsObj.tags) { $newsObj.tags } else { @() }
-                            author = if ($null -ne $newsObj.author -and $newsObj.author -ne "") { $newsObj.author } else { "FinVest News Desk" }
+                            author = if ($null -ne $newsObj.author -and $newsObj.author -ne "") { $newsObj.author } else { "WealthEngine News Desk" }
                             publishDate = if ($null -ne $newsObj.publishDate -and $newsObj.publishDate -ne "") { $newsObj.publishDate } else { ([DateTime]::UtcNow.ToString("o")) }
                             status = if ($null -ne $newsObj.status) { $newsObj.status } else { "Draft" }
                             featured = if ($null -ne $newsObj.featured) { [System.Convert]::ToBoolean($newsObj.featured) } else { $false }
@@ -1267,7 +1267,7 @@ while ($listener.IsListening) {
             # ── 15. SEO SETTINGS API ──
             elseif ($urlPath -eq "/api/admin/seo") {
                 if ($method -eq "GET") {
-                    $seo = Get-DbFile "seo" "{`"title`":`"FinVest Hub - Digital Wealth Engine`",`"desc`":`"Educational investing platform`",`"robots`":`"User-agent: *\nAllow: /`",`"redirects`":[]}"
+                    $seo = Get-DbFile "seo" "{`"title`":`"WealthEngine - Digital Wealth Engine`",`"desc`":`"Educational investing platform`",`"robots`":`"User-agent: *\nAllow: /`",`"redirects`":[]}"
                     Send-JsonResponseString $response 200 $seo
                 }
                 elseif ($method -eq "POST") {
