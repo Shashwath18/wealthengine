@@ -1,5 +1,5 @@
 # ==============================================
-# FINVEST HUB — FINANCE & INVESTING PLATFORM SERVER
+# WEALTHENGINE — FINANCE & INVESTING PLATFORM SERVER
 # server.ps1
 # ==============================================
 
@@ -51,7 +51,7 @@ function New-SessionToken($email, $role) {
     $pBase64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((ConvertTo-Json $payload -Compress)))
     
     $signatureInput = "$hBase64.$pBase64"
-    $sig = Get-Sha256Hash $signatureInput "finvest_hub_jwt_secret_salt_2026"
+    $sig = Get-Sha256Hash $signatureInput "wealthengine_jwt_secret_salt_2026"
     
     return "$hBase64.$pBase64.$sig"
 }
@@ -65,7 +65,7 @@ function Verify-SessionToken($token) {
     $pBase64 = $parts[1]
     $sig = $parts[2]
     
-    $expectedSig = Get-Sha256Hash "$hBase64.$pBase64" "finvest_hub_jwt_secret_salt_2026"
+    $expectedSig = Get-Sha256Hash "$hBase64.$pBase64" "wealthengine_jwt_secret_salt_2026"
     if ($sig -ne $expectedSig) { return $null }
     
     try {
@@ -125,7 +125,7 @@ $null = Get-DbFile "glossary" (ConvertTo-Json $defaultGlossary -Depth 5 -Compres
 
 # Default Settings (Anonymized & Cleaned)
 $defaultSettings = @{
-    siteName = "FinVest Hub"
+    siteName = "WealthEngine"
     tagline = "Your Digital Guide to Financial Literacy & Investing"
     adsenseEnabled = $false
     adBannerCode = ""
@@ -333,7 +333,7 @@ if (!$bindSuccess) {
 }
 
 Write-Output "--------------------------------------------------"
-Write-Output "  FINVEST HUB LOCAL SERVER RUNNING"
+Write-Output "  WEALTHENGINE LOCAL SERVER RUNNING"
 Write-Output "--------------------------------------------------"
 Write-Output "  URL: http://localhost:$port"
 Write-Output "  Serving files from: $root"

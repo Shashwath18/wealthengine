@@ -1,12 +1,12 @@
 /* ==============================================
-   FINVEST HUB — Client Engine, Router & Tools
+   WEALTHENGINE — Client Engine, Router & Tools
    main.js
    ============================================== */
 
 (function () {
   // ── Global Client State ───────────────────────
   const state = {
-    token: localStorage.getItem('finvest_token') || null,
+    token: localStorage.getItem('wealthengine_token') || null,
     user: null,
     posts: [],
     categories: [],
@@ -38,7 +38,7 @@
   
   function getAuthorName(origName) {
     if (!origName || origName.toLowerCase().includes('shashwath')) {
-      return 'FinVest Expert';
+      return 'WealthEngine Expert';
     }
     return origName;
   }
@@ -305,7 +305,7 @@
 
   // ── Theme Management ─────────────────────────
   function initTheme() {
-    const current = localStorage.getItem('finvest_theme') || 'light';
+    const current = localStorage.getItem('wealthengine_theme') || 'light';
     document.documentElement.setAttribute('data-theme', current);
   }
 
@@ -313,7 +313,7 @@
     const current = document.documentElement.getAttribute('data-theme');
     const next = current === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('finvest_theme', next);
+    localStorage.setItem('wealthengine_theme', next);
   }
 
   // ── Router ───────────────────────────────────
@@ -420,7 +420,7 @@
   function logout() {
     state.token = null;
     state.user = null;
-    localStorage.removeItem('finvest_token');
+    localStorage.removeItem('wealthengine_token');
     showToast('Signed out successfully.');
     renderNavMenu();
     window.location.hash = '#home';
@@ -1010,7 +1010,7 @@
     printWindow.document.write(`
       <html>
       <head>
-        <title>FinVest Hub - Loan Amortization Schedule</title>
+        <title>WealthEngine - Loan Amortization Schedule</title>
         <style>
           body { font-family: sans-serif; padding: 2rem; color: #111; }
           h2 { text-transform: uppercase; border-bottom: 2px solid #10B981; padding-bottom: 0.5rem; }
@@ -2311,7 +2311,7 @@
           const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(res, null, 2));
           const dlAnchorElem = document.createElement('a');
           dlAnchorElem.setAttribute("href", dataStr);
-          dlAnchorElem.setAttribute("download", "finvest_hub_db_backup.json");
+          dlAnchorElem.setAttribute("download", "wealthengine_db_backup.json");
           dlAnchorElem.click();
           showToast('JSON database snapshot downloaded successfully.');
         } catch (e) {
@@ -2784,7 +2784,7 @@
         const id = el('admin-news-edit-id').value;
         const title = el('admin-news-title').value.trim();
         const slug = el('admin-news-slug').value.trim();
-        const author = el('admin-news-author').value.trim() || 'FinVest News Desk';
+        const author = el('admin-news-author').value.trim() || 'WealthEngine News Desk';
         const shortDescription = el('admin-news-short-desc').value.trim();
         const content = el('admin-news-content').value.trim();
         const category = el('admin-news-category').value;
@@ -3071,7 +3071,7 @@
           });
           state.token = res.token;
           state.user = res.user;
-          localStorage.setItem('finvest_token', res.token);
+          localStorage.setItem('wealthengine_token', res.token);
           showToast('Welcome back, signed in successfully.');
           renderNavMenu();
           window.location.hash = '#home';
@@ -3096,7 +3096,7 @@
           });
           state.token = res.token;
           state.user = res.user;
-          localStorage.setItem('finvest_token', res.token);
+          localStorage.setItem('wealthengine_token', res.token);
           showToast('Account registered successfully.');
           renderNavMenu();
           window.location.hash = '#home';
