@@ -19,6 +19,7 @@
   window.addEventListener('DOMContentLoaded', async () => {
     initTheme();
     bindEvents();
+    checkDisclaimer();
     
     // Auth Check
     if (state.token) {
@@ -31,6 +32,48 @@
     routeView();
     window.addEventListener('hashchange', routeView);
   });
+
+  function checkDisclaimer() {
+    const accepted = localStorage.getItem('wealthengine_disclaimer_accepted');
+    const expiry = localStorage.getItem('wealthengine_disclaimer_expiry');
+    const now = Date.now();
+
+    if (!accepted || !expiry || now > parseInt(expiry)) {
+      const overlay = el('disclaimer-modal-overlay');
+      if (overlay) {
+        overlay.style.display = 'flex';
+        setTimeout(() => overlay.classList.add('active'), 10);
+        
+        const agreeBtn = el('btn-disclaimer-agree');
+        const leaveBtn = el('btn-disclaimer-leave');
+        const checkbox = el('disclaimer-agree-checkbox');
+        
+        if (checkbox && agreeBtn) {
+          checkbox.onchange = () => {
+            agreeBtn.disabled = !checkbox.checked;
+          };
+        }
+        
+        if (leaveBtn) {
+          leaveBtn.onclick = () => {
+            window.location.href = 'https://www.google.com';
+          };
+        }
+        
+        if (agreeBtn) {
+          agreeBtn.onclick = () => {
+            const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+            localStorage.setItem('wealthengine_disclaimer_accepted', 'true');
+            localStorage.setItem('wealthengine_disclaimer_expiry', (now + thirtyDays).toString());
+            overlay.classList.remove('active');
+            setTimeout(() => {
+              overlay.style.display = 'none';
+            }, 400);
+          };
+        }
+      }
+    }
+  }
 
   // ── Helpers ──────────────────────────────────
   function el(id) { return document.getElementById(id); }
