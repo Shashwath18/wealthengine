@@ -1667,56 +1667,36 @@
               <h3 id="admin-editor-title">Write New Guide</h3>
               <form id="admin-post-form">
                 <input type="hidden" id="admin-post-edit-id">
-                <div class="form-row" style="margin-bottom:1rem;">
+                
+                <div style="margin-bottom:1.25rem;">
                   <div class="field-group">
                     <label>Article Title</label>
-                    <input type="text" id="admin-post-title" required>
-                  </div>
-                  <div class="field-group">
-                    <label>Category</label>
-                    <select id="admin-post-category" required></select>
+                    <input type="text" id="admin-post-title" required placeholder="Enter article title...">
                   </div>
                 </div>
-                <div class="form-row" style="margin-bottom:1rem;">
+
+                <div style="margin-bottom:1.25rem;">
                   <div class="field-group">
                     <label>Cover Image URL</label>
-                    <input type="url" id="admin-post-image">
-                  </div>
-                  <div class="field-group">
-                    <label>Tags (Comma Separated)</label>
-                    <input type="text" id="admin-post-tags" placeholder="e.g. SIP, Investing">
+                    <input type="url" id="admin-post-image" placeholder="https://example.com/image.jpg">
                   </div>
                 </div>
-                <div class="form-row" style="margin-bottom:1rem;">
-                  <div class="field-group">
-                    <label>Scheduled Publishing Date (Optional)</label>
-                    <input type="datetime-local" id="admin-post-schedule">
-                  </div>
-                  <div class="field-group">
-                    <label>Status</label>
-                    <select id="admin-post-status">
-                      <option value="Draft">Draft</option>
-                      <option value="Published">Published</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="form-row" style="margin-bottom:1rem;">
-                  <div class="field-group">
-                    <label>SEO Meta Title</label>
-                    <input type="text" id="admin-post-seo-title">
-                  </div>
-                  <div class="field-group">
-                    <label>SEO Meta Description</label>
-                    <input type="text" id="admin-post-seo-desc">
-                  </div>
-                </div>
-                <div class="field-group" style="margin-bottom:1rem;">
-                  <label>Short Excerpt</label>
-                  <input type="text" id="admin-post-excerpt" required>
-                </div>
+
+                <!-- Hidden default attributes to keep data layer working -->
+                <select id="admin-post-category" style="display:none;"></select>
+                <input type="text" id="admin-post-tags" style="display:none;" value="Investing">
+                <input type="datetime-local" id="admin-post-schedule" style="display:none;">
+                <select id="admin-post-status" style="display:none;">
+                  <option value="Published" selected>Published</option>
+                  <option value="Draft">Draft</option>
+                </select>
+                <input type="text" id="admin-post-seo-title" style="display:none;">
+                <input type="text" id="admin-post-seo-desc" style="display:none;">
+                <input type="text" id="admin-post-excerpt" style="display:none;">
+
                 <div class="field-group" style="margin-bottom:1.5rem;">
                   <label>Content (Supports Markdown)</label>
-                  <textarea id="admin-post-content" rows="12" required style="resize:none; background:var(--color-bg); border:1px solid var(--color-border); border-radius:8px; padding:0.75rem; color:var(--color-text); font-family:monospace;"></textarea>
+                  <textarea id="admin-post-content" rows="12" required placeholder="Write your article body here using markdown..." style="resize:none; background:var(--color-bg); border:1px solid var(--color-border); border-radius:8px; padding:0.75rem; color:var(--color-text); font-family:monospace;"></textarea>
                 </div>
                 <div style="display:flex; gap:1rem;">
                   <button type="submit" class="btn primary">Save Post</button>

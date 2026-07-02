@@ -2252,15 +2252,15 @@
         e.preventDefault();
         const id = el('admin-post-edit-id').value;
         const title = el('admin-post-title').value.trim();
-        const categoryId = el('admin-post-category').value;
-        const featuredImage = el('admin-post-image').value.trim();
-        const tagInput = el('admin-post-tags').value.trim();
-        const excerpt = el('admin-post-excerpt').value.trim();
+        const categoryId = el('admin-post-category').value || 'cat-1';
+        const featuredImage = el('admin-post-image').value.trim() || 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=800&q=80';
+        const tagInput = el('admin-post-tags').value.trim() || 'Investing';
         const content = el('admin-post-content').value.trim();
-        const status = el('admin-post-status').value;
-        const scheduledAt = el('admin-post-schedule').value;
-        const seoTitle = el('admin-post-seo-title').value.trim();
-        const seoDesc = el('admin-post-seo-desc').value.trim();
+        const excerpt = el('admin-post-excerpt').value.trim() || (content.length > 120 ? content.substring(0, 120) + '...' : content);
+        const status = el('admin-post-status').value || 'Published';
+        const scheduledAt = el('admin-post-schedule').value || null;
+        const seoTitle = el('admin-post-seo-title').value.trim() || title;
+        const seoDesc = el('admin-post-seo-desc').value.trim() || excerpt;
         
         const tags = tagInput ? tagInput.split(',').map(t => t.trim()) : [];
         const bodyObj = { title, categoryId, featuredImage, tags, excerpt, content, status, scheduledAt, seoTitle, seoDesc };
