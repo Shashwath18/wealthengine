@@ -1076,6 +1076,10 @@ while ($listener.IsListening) {
                                         }
                                     }
                                 }
+                                if ($null -eq $card.slug -or $card.slug -eq "") {
+                                    $card.slug = $card.name.ToLower().Replace(" ", "-").Replace("?", "").Replace("!", "").Replace("/", "-")
+                                    $card.slug = [Regex]::Replace($card.slug, "[^a-z0-9\-]", "")
+                                }
                                 $cards += $card
                             }
                             Save-DbFile "cards" (ConvertTo-Json $cards -Depth 5 -Compress)

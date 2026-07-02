@@ -249,9 +249,12 @@
         fetchOptions.body = JSON.stringify(bodyObj);
         targetUrl = `${SUPABASE_URL}/rest/v1/cards`;
       } else if (method === 'PUT') {
+        const cardId = id || bodyObj.id;
+        bodyObj.slug = bodyObj.slug || bodyObj.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        
         fetchOptions.method = 'PATCH';
         fetchOptions.body = JSON.stringify(bodyObj);
-        targetUrl = `${SUPABASE_URL}/rest/v1/cards?id=eq.${id}`;
+        targetUrl = `${SUPABASE_URL}/rest/v1/cards?id=eq.${cardId}`;
       } else if (method === 'DELETE') {
         targetUrl = `${SUPABASE_URL}/rest/v1/cards?id=eq.${id}`;
       }
