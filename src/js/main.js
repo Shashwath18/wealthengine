@@ -474,6 +474,7 @@
     });
 
     state.activeView = viewName;
+    updatePageDisclaimer(viewName);
     
     // Clear Ads
     await fetchAdsenseSettings();
@@ -538,6 +539,26 @@
     }
     
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Contextual Page Disclaimer Bar ──────────
+  function updatePageDisclaimer(viewName) {
+    const bar = el('page-disclaimer-bar');
+    if (!bar) return;
+    const disclaimers = {
+      home:         { icon: '⚠️', label: 'General Disclaimer', text: 'WealthEngine provides financial education only. Nothing on this site constitutes personalised financial advice. Consult a qualified adviser before making any financial decision.' },
+      news:         { icon: '📰', label: 'News Disclaimer', text: 'News articles are sourced for informational purposes. Market conditions change rapidly — always verify with official sources before acting on any news item.' },
+      articles:     { icon: '📝', label: 'Editorial Disclaimer', text: 'Articles represent the author\'s views and general information only. They do not constitute investment, tax, or legal advice. Individual circumstances vary.' },
+      calculators:  { icon: '🧮', label: 'Calculator Disclaimer', text: 'All calculator results are estimates based on the inputs you provide and standard assumptions. Actual figures will differ — consult a professional for accurate projections.' },
+      'credit-cards': { icon: '💳', label: 'Credit Card Disclaimer', text: 'Credit card comparisons are for general reference only. Approval, rates, and fees depend on your individual credit profile. Always read the lender\'s Key Facts Document.' },
+      investing:    { icon: '💹', label: 'Investment Disclaimer', text: 'Past performance is not a reliable indicator of future results. All investments carry risk including the possible loss of principal. This is not personalised investment advice.' },
+      about:        { icon: 'ℹ️', label: 'About Disclaimer', text: 'WealthEngine is an independent educational platform. We are not affiliated with any financial institution, bank, or regulatory body.' },
+      glossary:     { icon: '📖', label: 'Glossary Disclaimer', text: 'Definitions are provided for general educational purposes. Financial terms may have varying meanings depending on jurisdiction or context.' },
+      dashboard:    { icon: '👤', label: 'Account Disclaimer', text: 'Your account data is stored securely. WealthEngine does not sell personal information to third parties.' },
+      admin:        { icon: '🔒', label: 'Admin Area', text: 'Restricted area. Actions taken here directly affect live site content and user data. Proceed with care.' },
+    };
+    const d = disclaimers[viewName] || disclaimers.home;
+    bar.innerHTML = `<span class="disc-icon">${d.icon}</span><span><strong>${d.label}:</strong>${d.text}</span>`;
   }
 
   // ── Fetch AdSense settings & inject ads ──────

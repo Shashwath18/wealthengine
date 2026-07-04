@@ -1197,6 +1197,42 @@ button, input, select, textarea {
   color: var(--color-accent);
 }
 
+/* ── Page Contextual Disclaimer Bar ── */
+.page-disclaimer-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.52rem 1.2rem;
+  background: linear-gradient(90deg, rgba(245,158,11,0.13) 0%, rgba(251,191,36,0.09) 100%);
+  border-left: 3px solid #f59e0b;
+  border-bottom: 1px solid rgba(245,158,11,0.18);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #b45309;
+  letter-spacing: 0.01em;
+  line-height: 1.45;
+  min-height: 36px;
+  transition: background 0.3s, border-color 0.3s;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(6px);
+}
+.page-disclaimer-bar .disc-icon {
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+.page-disclaimer-bar strong {
+  font-weight: 700;
+  margin-right: 0.25rem;
+}
+[data-theme="dark"] .page-disclaimer-bar {
+  background: linear-gradient(90deg, rgba(245,158,11,0.10) 0%, rgba(251,191,36,0.06) 100%);
+  border-left-color: #f59e0b;
+  color: #fcd34d;
+}
+
 /* ── Disclaimer Modal Popup Styles ── */
 .disclaimer-modal-overlay {
   position: fixed;
