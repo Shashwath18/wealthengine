@@ -2346,7 +2346,7 @@
         el('admin-post-tags').value = '';
         el('admin-post-excerpt').value = '';
         el('admin-post-content').value = '';
-        el('admin-post-status').value = 'Draft';
+        el('admin-post-status').value = 'Published';
         el('admin-post-schedule').value = '';
         el('admin-post-seo-title').value = '';
         el('admin-post-seo-desc').value = '';
