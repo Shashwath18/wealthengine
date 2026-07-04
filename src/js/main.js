@@ -220,6 +220,20 @@
         fetchOptions.body = JSON.stringify(bodyObj);
         targetUrl = `${SUPABASE_URL}/rest/v1/posts`;
       }
+    } else if (path.startsWith('/api/comments')) {
+      if (method === 'GET') {
+        const postId = params.get('postId');
+        targetUrl = postId
+          ? `${SUPABASE_URL}/rest/v1/comments?postId=eq.${postId}&select=*&order=createdAt.asc`
+          : `${SUPABASE_URL}/rest/v1/comments?select=*&order=createdAt.asc`;
+      } else if (method === 'POST') {
+        bodyObj.id = bodyObj.id || ('cmt-' + Math.random().toString(36).substring(2, 10));
+        bodyObj.authorId = bodyObj.authorId || (state.user ? state.user.id : 'anonymous');
+        bodyObj.authorName = bodyObj.authorName || (state.user ? (state.user.name || state.user.email) : 'Guest');
+        bodyObj.createdAt = bodyObj.createdAt || new Date().toISOString();
+        fetchOptions.body = JSON.stringify(bodyObj);
+        targetUrl = `${SUPABASE_URL}/rest/v1/comments`;
+      }
     } else if (path.startsWith('/api/news/detail')) {
       const id = params.get('id');
       const slug = params.get('slug');
@@ -916,7 +930,13 @@
     const listBox = el('comments-list-box');
     const badge = el('comments-count');
 
-    const comments = await fetchApi(`/api/comments?postId=${postId}`);
+    let comments = [];
+    try {
+      comments = await fetchApi(`/api/comments?postId=${postId}`);
+      if (!Array.isArray(comments)) comments = [];
+    } catch (e) {
+      console.warn('Comments unavailable:', e.message);
+    }
     badge.textContent = comments.length;
 
     if (state.user) {
