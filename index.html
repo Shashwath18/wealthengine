@@ -1052,323 +1052,149 @@
           <h3 style="font-size:1rem; letter-spacing:1px; margin-bottom:1rem; opacity:0.8;">⚙️ FINANCE CMS</h3>
           <nav class="admin-menu">
             <button class="admin-menu-btn active" data-tab="dashboard">📊 Dashboard</button>
-            <button class="admin-menu-btn" data-tab="news">📰 News CMS</button>
-            <button class="admin-menu-btn" data-tab="posts">📝 Finance Articles</button>
-            <button class="admin-menu-btn" data-tab="cards">💳 Credit Cards</button>
           </nav>
         </aside>
 
         <div class="admin-content-body">
-          <!-- 1. Dashboard Subpanel -->
-          <div id="admin-panel-dashboard" class="admin-subpanel active">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+          <!-- Top Dashboard Navigation Bar (Inside the page) -->
+          <div class="dash-subnav" style="display: flex; gap: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+            <button class="btn active dash-tab-btn" data-tab="dashboard" style="display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1.1rem; font-size: 0.85rem; border-radius: 8px;">📊 Overview & Stats</button>
+            <button class="btn outline dash-tab-btn" data-tab="news" style="display: flex; align-it            <!-- Header -->
+            <div class="dash-header">
               <div>
-                <h2 style="margin:0; font-family:var(--font-display); font-weight:700;">📊 Platform Dashboard Overview</h2>
-                <p style="margin:0.25rem 0 0; opacity:0.75; font-size:0.85rem;">Real-time metrics, analytics, publication logs, and administrative controls.</p>
+                <h2 class="dash-title">📊 Platform Analytics & Overview</h2>
+                <p class="dash-subtitle" id="dash-last-updated">Loading live data…</p>
               </div>
-              <div style="display:flex; gap:0.5rem;">
-                <select id="admin-dashboard-period" style="padding:0.4rem 0.8rem; border-radius:8px; border:1px solid var(--color-border); background:var(--color-bg); color:var(--color-text); font-size:0.85rem;">
-                  <option value="7d">Last 7 Days</option>
-                  <option value="30d" selected>Last 30 Days</option>
-                  <option value="12m">Last 12 Months</option>
+              <div style="display:flex;gap:.75rem;align-items:center;">
+                <select id="dash-period" class="dash-period-select">
+                  <option value="7">Last 7 days</option>
+                  <option value="30" selected>Last 30 days</option>
+                  <option value="90">Last 90 days</option>
                 </select>
-                <button id="admin-dashboard-refresh" class="btn outline" style="padding:0.4rem 0.8rem; font-size:0.85rem;" title="Refresh Dashboard">🔄 Refresh</button>
+                <button class="btn outline" id="dash-refresh-btn" style="padding:.45rem .9rem;font-size:.82rem;">↻ Refresh</button>
               </div>
             </div>
 
-
-            <!-- GRID ROW 1: Traffic Overview & Active Users -->
-            <div style="display:grid; grid-template-columns:3fr 2fr; gap:1.5rem; margin-bottom:1.5rem;">
-              <!-- 📈 Traffic Overview Card -->
-              <div class="checkout-panel" style="padding:1.5rem;">
-                <h3 style="margin-top:0; font-size:1.1rem; border-bottom:1px solid var(--color-border); padding-bottom:0.5rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center;">
-                  <span>📈 Traffic Overview</span>
-                  <span id="traffic-growth-badge" style="background:rgba(34,197,94,0.1); color:rgb(34,197,94); font-size:0.75rem; padding:0.15rem 0.4rem; border-radius:4px; font-weight:700;">+12.4% Growth</span>
-                </h3>
-                <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:1rem; margin-bottom:1.5rem;">
-                  <div>
-                    <span style="font-size:0.75rem; opacity:0.8; display:block;">Total Visitors</span>
-                    <strong id="traffic-total-visitors" style="font-size:1.4rem; font-family:var(--font-display);">24,580</strong>
-                  </div>
-                  <div>
-                    <span style="font-size:0.75rem; opacity:0.8; display:block;">Total Sessions</span>
-                    <strong id="traffic-total-sessions" style="font-size:1.4rem; font-family:var(--font-display);">31,240</strong>
-                  </div>
-                  <div>
-                    <span style="font-size:0.75rem; opacity:0.8; display:block;">Unique Visitors</span>
-                    <strong id="traffic-unique-visitors" style="font-size:1.4rem; font-family:var(--font-display);">18,920</strong>
-                  </div>
-                  <div>
-                    <span style="font-size:0.75rem; opacity:0.8; display:block;">New vs Returning</span>
-                    <strong id="traffic-new-vs-ret" style="font-size:1rem; font-family:var(--font-display); line-height:2;">74% / 26%</strong>
-                  </div>
-                </div>
-                <!-- Main Traffic Chart -->
-                <div style="height:250px; position:relative;">
-                  <canvas id="chart-traffic-visitors"></canvas>
+            <!-- KPI Row -->
+            <div class="dash-kpi-grid">
+              <div class="dash-kpi-card">
+                <div class="kpi-icon" style="background:rgba(99,102,241,.15);color:#818cf8;">👁</div>
+                <div class="kpi-body">
+                  <span class="kpi-label">Total Page Views</span>
+                  <strong class="kpi-value" id="kpi-total-views">—</strong>
+                  <span class="kpi-sub" id="kpi-views-trend">real views, no bots</span>
                 </div>
               </div>
-
-              <!-- 👥 Active Visitors Card -->
-              <div class="checkout-panel" style="padding:1.5rem; display:flex; flex-direction:column; justify-content:space-between;">
-                <div>
-                  <h3 style="margin-top:0; font-size:1.1rem; border-bottom:1px solid var(--color-border); padding-bottom:0.5rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center;">
-                    <span>👥 Active Visitors</span>
-                    <span style="display:inline-flex; align-items:center; gap:0.4rem; font-size:0.78rem; font-weight:700; color:var(--color-error);">
-                      <span class="live-pulse" style="width:8px; height:8px; background:var(--color-error); border-radius:50%; display:inline-block; animation:pulse 1.5s infinite;"></span>
-                      <span id="active-online-now">12</span> ONLINE NOW
-                    </span>
-                  </h3>
-                  
-                  <div style="margin-bottom:1rem;">
-                    <span style="font-size:0.75rem; opacity:0.8; display:block; margin-bottom:0.25rem;">Active Devices Breakdown</span>
-                    <div style="display:flex; align-items:center; gap:1rem; font-size:0.8rem;">
-                      <div style="flex:1;">
-                        <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem; font-size:0.72rem; opacity:0.8;">
-                          <span>💻 Desktop: <strong id="active-device-desktop-pct">60%</strong></span>
-                          <span>📱 Mobile: <strong id="active-device-mobile-pct">35%</strong></span>
-                          <span>📟 Tablet: <strong id="active-device-tablet-pct">5%</strong></span>
-                        </div>
-                        <div style="height:8px; display:flex; border-radius:4px; overflow:hidden; background:var(--color-border);">
-                          <div id="active-device-desktop-bar" style="width:60%; background:var(--color-accent);"></div>
-                          <div id="active-device-mobile-bar" style="width:35%; background:#22c55e;"></div>
-                          <div id="active-device-tablet-bar" style="width:5%; background:#eab308;"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <span style="font-size:0.75rem; opacity:0.8; display:block; margin-bottom:0.5rem;">Current Active Pages</span>
-                  <div style="max-height:120px; overflow-y:auto; border:1px solid var(--color-border); border-radius:8px; padding:0.5rem; font-size:0.78rem;">
-                    <table style="width:100%; border-collapse:collapse;" id="active-pages-table">
-                      <!-- Active pages rows -->
-                    </table>
-                  </div>
+              <div class="dash-kpi-card">
+                <div class="kpi-icon" style="background:rgba(34,197,94,.15);color:#4ade80;">👥</div>
+                <div class="kpi-body">
+                  <span class="kpi-label">Registered Users</span>
+                  <strong class="kpi-value" id="kpi-users">—</strong>
+                  <span class="kpi-sub" id="kpi-users-sub">all time</span>
                 </div>
-
-                <div style="margin-top:1rem;">
-                  <span style="font-size:0.75rem; opacity:0.8; display:block; margin-bottom:0.5rem;">Live Activity Feed</span>
-                  <div id="live-activity-feed-list" style="max-height:110px; overflow-y:auto; font-size:0.75rem; opacity:0.85; display:flex; flex-direction:column; gap:0.4rem;">
-                    <!-- Live logs -->
-                  </div>
+              </div>
+              <div class="dash-kpi-card">
+                <div class="kpi-icon" style="background:rgba(251,146,60,.15);color:#fb923c;">🔥</div>
+                <div class="kpi-body">
+                  <span class="kpi-label">Active Now</span>
+                  <strong class="kpi-value" id="kpi-active">—</strong>
+                  <span class="kpi-sub" id="kpi-active-sub">sessions · 15m</span>
+                </div>
+              </div>
+              <div class="dash-kpi-card">
+                <div class="kpi-icon" style="background:rgba(236,72,153,.15);color:#f472b6;">👤</div>
+                <div class="kpi-body">
+                  <span class="kpi-label">Logged-In Users</span>
+                  <strong class="kpi-value" id="kpi-loggedin">—</strong>
+                  <span class="kpi-sub">active accounts</span>
+                </div>
+              </div>
+              <div class="dash-kpi-card">
+                <div class="kpi-icon" style="background:rgba(14,165,233,.15);color:#38bdf8;">✨</div>
+                <div class="kpi-body">
+                  <span class="kpi-label">New Users Today</span>
+                  <strong class="kpi-value" id="kpi-new-today">—</strong>
+                  <span class="kpi-sub" id="kpi-new-sub">registered today</span>
+                </div>
+              </div>
+              <div class="dash-kpi-card">
+                <div class="kpi-icon" style="background:rgba(245,158,11,.15);color:#fcd34d;">📧</div>
+                <div class="kpi-body">
+                  <span class="kpi-label">Subscribers</span>
+                  <strong class="kpi-value" id="kpi-subs">—</strong>
+                  <span class="kpi-sub">newsletter list</span>
                 </div>
               </div>
             </div>
 
-            <!-- GRID ROW 2: Page Views & Content Performance -->
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
-              <!-- 👁️ Page Views Card -->
-              <div class="checkout-panel" style="padding:1.5rem;">
-                <h3 style="margin-top:0; font-size:1.1rem; border-bottom:1px solid var(--color-border); padding-bottom:0.5rem; margin-bottom:1rem;">👁️ Page Views & Top Pages</h3>
-                <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:1rem; margin-bottom:1rem; text-align:center;">
-                  <div>
-                    <span style="font-size:0.75rem; opacity:0.8; display:block;">Total Page Views</span>
-                    <strong id="views-total-views" style="font-size:1.3rem; font-family:var(--font-display);">0</strong>
-                  </div>
-                  <div>
-                    <span style="font-size:0.75rem; opacity:0.8; display:block;">Unique Page Views</span>
-                    <strong id="views-unique-views" style="font-size:1.3rem; font-family:var(--font-display);">0</strong>
-                  </div>
-                  <div>
-                    <span style="font-size:0.75rem; opacity:0.8; display:block;">Avg Views/Session</span>
-                    <strong id="views-avg-session" style="font-size:1.3rem; font-family:var(--font-display);">1.65</strong>
-                  </div>
+            <!-- Row 1: Daily/Monthly Views Chart + Traffic Sources -->
+            <div class="dash-charts-row">
+              <div class="dash-card dash-card-lg">
+                <div class="dash-card-head">
+                  <span class="dash-card-title">📈 Daily / Monthly Visitors Statistics</span>
+                  <span class="dash-badge green" id="views-chart-badge"></span>
                 </div>
-
-                <div style="height:160px; margin-bottom:1rem; position:relative;">
-                  <canvas id="chart-page-views-trend"></canvas>
-                </div>
-
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; font-size:0.8rem; border-top:1px solid var(--color-border); padding-top:1rem;">
-                  <div>
-                    <strong style="color:var(--color-accent); display:block; margin-bottom:0.5rem;">Top Viewed Categories</strong>
-                    <div id="views-top-categories" style="display:flex; flex-direction:column; gap:0.4rem;">
-                      <!-- Categories -->
-                    </div>
-                  </div>
-                  <div>
-                    <strong style="color:var(--color-accent); display:block; margin-bottom:0.5rem;">Top Viewed Pages</strong>
-                    <div id="views-top-pages" style="display:flex; flex-direction:column; gap:0.4rem;">
-                      <!-- Pages -->
-                    </div>
-                  </div>
+                <div style="height:220px;position:relative;">
+                  <canvas id="chart-daily-views"></canvas>
                 </div>
               </div>
-
-              <!-- 📄 Content Performance Card -->
-              <div class="checkout-panel" style="padding:1.5rem;">
-                <h3 style="margin-top:0; font-size:1.1rem; border-bottom:1px solid var(--color-border); padding-bottom:0.5rem; margin-bottom:1rem;">📄 Content Performance</h3>
-                <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:0.5rem; margin-bottom:1.5rem; text-align:center;">
-                  <div>
-                    <span style="font-size:0.65rem; opacity:0.8; display:block;">Published</span>
-                    <strong id="content-stat-published" style="font-size:1.25rem;">0</strong>
-                  </div>
-                  <div>
-                    <span style="font-size:0.65rem; opacity:0.8; display:block;">Drafts</span>
-                    <strong id="content-stat-drafts" style="font-size:1.25rem;">0</strong>
-                  </div>
-                  <div>
-                    <span style="font-size:0.65rem; opacity:0.8; display:block;">Scheduled</span>
-                    <strong id="content-stat-scheduled" style="font-size:1.25rem;">0</strong>
-                  </div>
-                  <div>
-                    <span style="font-size:0.65rem; opacity:0.8; display:block;">Avg Read Time</span>
-                    <strong id="content-stat-read-time" style="font-size:1.25rem;">4.2m</strong>
-                  </div>
-                  <div>
-                    <span style="font-size:0.65rem; opacity:0.8; display:block;">Engagement</span>
-                    <strong id="content-stat-engagement" style="font-size:1.25rem;">82%</strong>
-                  </div>
+              <div class="dash-card">
+                <div class="dash-card-head">
+                  <span class="dash-card-title">🌐 Traffic Sources</span>
                 </div>
-
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; font-size:0.8rem; border-top:1px solid var(--color-border); padding-top:1rem;">
-                  <div>
-                    <strong style="color:var(--color-accent); display:block; margin-bottom:0.5rem;">🔥 Most Read Articles</strong>
-                    <div id="content-most-read" style="display:flex; flex-direction:column; gap:0.4rem;">
-                      <!-- Most read -->
-                    </div>
-                  </div>
-                  <div>
-                    <strong style="color:var(--color-accent); display:block; margin-bottom:0.5rem;">⚠️ Least Performing</strong>
-                    <div id="content-least-performing" style="display:flex; flex-direction:column; gap:0.4rem;">
-                      <!-- Least read -->
-                    </div>
-                  </div>
-                </div>
-
-                <div style="margin-top:1rem; border-top:1px solid var(--color-border); padding-top:1rem; font-size:0.8rem;">
-                  <strong style="color:var(--color-accent); display:block; margin-bottom:0.5rem;">Recently Updated Content</strong>
-                  <div id="content-recently-updated" style="display:flex; flex-direction:column; gap:0.4rem;">
-                    <!-- Recently updated -->
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- GRID ROW 3: Subscriber Growth & Traffic Analytics Charts -->
-            <div style="display:grid; grid-template-columns:3fr 2fr; gap:1.5rem; margin-bottom:1.5rem;">
-              <!-- 📧 Subscriber Growth Card -->
-              <div class="checkout-panel" style="padding:1.5rem;">
-                <h3 style="margin-top:0; font-size:1.1rem; border-bottom:1px solid var(--color-border); padding-bottom:0.5rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center;">
-                  <span>📧 Subscriber Growth</span>
-                  <button id="btn-export-subscribers-csv" class="btn outline" style="padding:0.3rem 0.75rem; font-size:0.75rem;">Export CSV List</button>
-                </h3>
-                <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:1rem; margin-bottom:1.25rem;">
-                  <div>
-                    <span style="font-size:0.72rem; opacity:0.8; display:block;">Total Subscribers</span>
-                    <strong id="sub-total-count" style="font-size:1.3rem;">0</strong>
-                  </div>
-                  <div>
-                    <span style="font-size:0.72rem; opacity:0.8; display:block;">New Today</span>
-                    <strong id="sub-today-count" style="font-size:1.3rem;">0</strong>
-                  </div>
-                  <div>
-                    <span style="font-size:0.72rem; opacity:0.8; display:block;">Weekly Growth</span>
-                    <strong id="sub-weekly-growth" style="font-size:1.3rem; color:#22c55e;">+4.5%</strong>
-                  </div>
-                  <div>
-                    <span style="font-size:0.72rem; opacity:0.8; display:block;">Monthly Growth</span>
-                    <strong id="sub-monthly-growth" style="font-size:1.3rem; color:#22c55e;">+18.2%</strong>
-                  </div>
-                </div>
-
-                <div style="height:150px; margin-bottom:1rem; position:relative;">
-                  <canvas id="chart-subscriber-trend"></canvas>
-                </div>
-
-                <div style="border-top:1px solid var(--color-border); padding-top:1rem; font-size:0.8rem;">
-                  <strong style="color:var(--color-accent); display:block; margin-bottom:0.5rem;">Recent Subscribers</strong>
-                  <div style="max-height:100px; overflow-y:auto;">
-                    <table style="width:100%; border-collapse:collapse; text-align:left;" id="subscribers-recent-table">
-                      <thead>
-                        <tr style="border-bottom:1px solid var(--color-border); opacity:0.8; font-size:0.72rem;">
-                          <th>Email Address</th>
-                          <th>Registered Date</th>
-                          <th>Source</th>
-                        </tr>
-                      </thead>
-                      <tbody id="subscribers-recent-tbody">
-                        <!-- Filled dynamically -->
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 📊 Traffic Analytics (Device, Sources, Country Breakdown) -->
-              <div class="checkout-panel" style="padding:1.5rem; display:flex; flex-direction:column; justify-content:space-between;">
-                <h3 style="margin-top:0; font-size:1.1rem; border-bottom:1px solid var(--color-border); padding-bottom:0.5rem; margin-bottom:1rem;">📊 Traffic Analytics</h3>
-                
-                <div style="height:180px; position:relative; margin-bottom:1.5rem;">
+                <div style="height:170px;position:relative;margin-bottom:.75rem;">
                   <canvas id="chart-traffic-sources"></canvas>
                 </div>
-                
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; font-size:0.8rem; border-top:1px solid var(--color-border); padding-top:1rem;">
-                  <div>
-                    <strong style="color:var(--color-accent); display:block; margin-bottom:0.4rem;">Country Distribution</strong>
-                    <div id="analytics-countries-list" style="display:flex; flex-direction:column; gap:0.35rem;">
-                      <!-- Countries list -->
-                    </div>
-                  </div>
-                  <div>
-                    <strong style="color:var(--color-accent); display:block; margin-bottom:0.4rem;">Browser Usage</strong>
-                    <div id="analytics-browsers-list" style="display:flex; flex-direction:column; gap:0.35rem;">
-                      <!-- Browsers list -->
-                    </div>
-                  </div>
+                <div id="traffic-sources-legend" style="display:flex;flex-direction:column;gap:.4rem;font-size:.78rem;"></div>
+              </div>
+            </div>
+
+            <!-- Row 2: Top Pages + User Growth Chart -->
+            <div class="dash-charts-row">
+              <div class="dash-card">
+                <div class="dash-card-head">
+                  <span class="dash-card-title">🔥 Most Viewed Pages</span>
+                  <span class="kpi-label">real views, no bots</span>
+                </div>
+                <table class="dash-table">
+                  <thead><tr><th>Page</th><th>Views</th><th>Share</th></tr></thead>
+                  <tbody id="top-pages-tbody"><tr><td colspan="3" style="opacity:.5;text-align:center;padding:1.5rem;">Loading…</td></tr></tbody>
+                </table>
+              </div>
+              <div class="dash-card">
+                <div class="dash-card-head">
+                  <span class="dash-card-title">👥 User Growth Analytics</span>
+                  <span class="dash-badge blue" id="user-growth-badge"></span>
+                </div>
+                <div style="height:220px;position:relative;">
+                  <canvas id="chart-user-growth"></canvas>
                 </div>
               </div>
             </div>
 
-            <!-- 🔥 Top Performing Pages Table -->
-            <div class="checkout-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
-              <h3 style="margin-top:0; font-size:1.1rem; border-bottom:1px solid var(--color-border); padding-bottom:0.5rem; margin-bottom:1rem;">🔥 Top Performing Pages (Top 10)</h3>
-              <div class="admin-table-container">
-                <table class="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Page Route / URL</th>
-                      <th>Total Views</th>
-                      <th>Unique Visitors</th>
-                      <th>Avg Time on Page</th>
-                      <th>Bounce Rate</th>
-                      <th>Entry Source</th>
-                      <th>Last Viewed</th>
-                    </tr>
-                  </thead>
-                  <tbody id="admin-dashboard-top-pages-tbody">
-                    <!-- Dynamic -->
-                  </tbody>
-                </table>
+            <!-- Row 3: Activity Timeline + Login Activity (Recent Logins, Devices, Locations) -->
+            <div class="dash-charts-row">
+              <div class="dash-card dash-card-lg">
+                <div class="dash-card-head">
+                  <span class="dash-card-title">⏱ User Activity & Login Timeline</span>
+                </div>
+                <div id="activity-timeline" class="activity-timeline">
+                  <div class="timeline-loading">Loading activity…</div>
+                </div>
+              </div>
+              <div class="dash-card">
+                <div class="dash-card-head">
+                  <span class="dash-card-title">🏆 Popular Content & Stock Pages</span>
+                </div>
+                <div id="popular-content-list" style="display:flex;flex-direction:column;gap:.6rem;"></div>
               </div>
             </div>
 
-            <!-- 📰 Latest Publications Card -->
-            <div class="checkout-panel" style="padding:1.5rem; margin-bottom:1.5rem;">
-              <h3 style="margin-top:0; font-size:1.1rem; border-bottom:1px solid var(--color-border); padding-bottom:0.5rem; margin-bottom:1rem;">📰 Latest Publications (Articles & News)</h3>
-              <div class="admin-table-container">
-                <table class="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Type</th>
-                      <th>Headline</th>
-                      <th>Publish Date</th>
-                      <th>Author</th>
-                      <th>Category</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="admin-dashboard-latest-pub-tbody">
-                    <!-- Dynamic -->
-                  </tbody>
-                </table>
+            <!-- Administrative Quick System Controls -->
+            <div class="dash-card" style="margin-top: 1rem;">
+              <div class="dash-card-head">
+                <span class="dash-card-title">⚙️ System Administrative Controls</span>
               </div>
-            </div>
-
-            <!-- Administrative Quick Controls (Maintenance & DB Wipe) -->
-            <div class="checkout-panel" style="padding:1.5rem;">
-              <h3 style="margin-top:0; font-size:1.1rem; border-bottom:1px solid var(--color-border); padding-bottom:0.5rem; margin-bottom:1rem;">⚙️ Platform System Controls</h3>
               <div style="display:flex; gap:1.5rem; align-items:center; justify-content:space-between; flex-wrap:wrap;">
                 <div style="display:flex; gap:1.5rem; align-items:center;">
                   <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
@@ -1377,13 +1203,11 @@
                   </label>
                 </div>
                 <div style="display:flex; gap:0.5rem;">
-                  <button id="admin-quick-backup-btn" class="btn primary">📥 Backup Database</button>
-                  <button id="admin-quick-clear-btn" class="btn outline" style="color:var(--color-error); border-color:rgba(239,68,68,0.2);">⚠️ Purge Database</button>
+                  <button id="admin-quick-backup-btn" class="btn primary" style="padding: 0.5rem 1rem; font-size: 0.82rem;">📥 Backup Database</button>
+                  <button id="admin-quick-clear-btn" class="btn outline" style="color:var(--color-error); border-color:rgba(239,68,68,0.2); padding: 0.5rem 1rem; font-size: 0.82rem;">⚠️ Purge Database</button>
                 </div>
               </div>
-            </div>
-            
-          </div>
+          </div><!-- /admin-panel-dashboard -->
 
           <!-- 2B. News Manager Subpanel (Sub-SPA Layout) -->
           <div id="admin-panel-news" class="admin-subpanel">

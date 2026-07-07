@@ -1729,479 +1729,382 @@
     const view = el('view-admin');
     view.classList.add('active');
 
-    // Sub-SPA Tab switching handler
+    // Sub-SPA Tab switching handler for page sub-tabs
+    const bindSubnavTabs = () => {
+      document.querySelectorAll('.dash-tab-btn').forEach(btn => {
+        btn.onclick = async () => {
+          document.querySelectorAll('.dash-tab-btn').forEach(b => {
+            b.classList.remove('active');
+            b.classList.add('outline');
+          });
+          btn.classList.add('active');
+          btn.classList.remove('outline');
+
+          document.querySelectorAll('.admin-content-body > .admin-subpanel').forEach(p => p.classList.remove('active'));
+          
+          const activeTab = btn.dataset.tab;
+          const panel = el(`admin-panel-${activeTab}`);
+          if (panel) panel.classList.add('active');
+
+          // Load active tab data
+          if (activeTab === 'dashboard') await renderAdminDashboard();
+          else if (activeTab === 'news') await renderAdminNews();
+          else if (activeTab === 'posts') await renderAdminPostsTable();
+          else if (activeTab === 'cards') await renderAdminCardsTable();
+        };
+      });
+    };
+
+    // Sidebar menu click (always has dashboard as active, resets page to overview stats tab)
     document.querySelectorAll('.admin-menu-btn').forEach(btn => {
       btn.onclick = async () => {
         document.querySelectorAll('.admin-menu-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        document.querySelectorAll('.admin-content-body > .admin-subpanel').forEach(p => p.classList.remove('active'));
         
-        const activeTab = btn.dataset.tab;
-        el(`admin-panel-${activeTab}`).classList.add('active');
-
-        // Load active tab data
-        if (activeTab === 'dashboard') await renderAdminDashboard();
-        else if (activeTab === 'news') await renderAdminNews();
-        else if (activeTab === 'posts') await renderAdminPostsTable();
-        else if (activeTab === 'cards') await renderAdminCardsTable();
+        // Reset subnav buttons to dashboard tab active
+        document.querySelectorAll('.dash-tab-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.tab === 'dashboard');
+          b.classList.toggle('outline', b.dataset.tab !== 'dashboard');
+        });
+        
+        document.querySelectorAll('.admin-content-body > .admin-subpanel').forEach(p => p.classList.remove('active'));
+        el('admin-panel-dashboard').classList.add('active');
+        await renderAdminDashboard();
       };
     });
 
-    // Default to Dashboard tab
+    // Default to Dashboard tab on initial load
     document.querySelectorAll('.admin-menu-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === 'dashboard'));
+    document.querySelectorAll('.dash-tab-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.tab === 'dashboard');
+      b.classList.toggle('outline', b.dataset.tab !== 'dashboard');
+    });
     document.querySelectorAll('.admin-content-body > .admin-subpanel').forEach(p => p.classList.toggle('active', p.id === 'admin-panel-dashboard'));
+    
+    bindSubnavTabs();
     await renderAdminDashboard();
     await bindAdminEventHandlers();
     wireImagePickers();
   }
 
-  // ── 1. Dashboard Subpanel ──
-  let activeUsersTimer = null;
+  // ── Page View Tracker (bot-filtered, real users only) ──────────────
+  const BOT_PATTERNS = /bot|crawler|spider|slurp|bingpreview|google|facebook|twitter|lighthouse|pingdom|semrush|ahrefs|moz|wget|curl|python|java|go-http|okhttp|libwww/i;
 
+  function getOrCreateSessionId() {
+    let sid = sessionStorage.getItem('we_sid');
+    if (!sid) {
+      sid = 'sess-' + Math.random().toString(36).substring(2, 12) + '-' + Date.now();
+      sessionStorage.setItem('we_sid', sid);
+    }
+    return sid;
+  }
+
+  function getDeviceType() {
+    const ua = navigator.userAgent;
+    if (/tablet|ipad/i.test(ua)) return 'tablet';
+    if (/mobile|android|iphone/i.test(ua)) return 'mobile';
+    return 'desktop';
+  }
+
+  async function trackPageView(page) {
+    if (BOT_PATTERNS.test(navigator.userAgent)) return;
+    if (!USE_SUPABASE) return;
+
+    const payload = {
+      page: page || 'home',
+      session_id: getOrCreateSessionId(),
+      user_id: state.user ? state.user.id : null,
+      device_type: getDeviceType(),
+      referrer: document.referrer ? new URL(document.referrer).hostname : 'direct',
+      created_at: new Date().toISOString()
+    };
+
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/page_views`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify(payload)
+      });
+      // Also upsert session for active-user tracking
+      await fetch(`${SUPABASE_URL}/rest/v1/user_sessions`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify({
+          session_id: payload.session_id,
+          user_id: payload.user_id,
+          last_seen: payload.created_at,
+          device_type: payload.device_type,
+          page: payload.page
+        })
+      });
+    } catch (e) {
+      // Silent fail
+    }
+  }
+
+  // ── Premium Analytics Dashboard ──────────────────────────────────────
   async function renderAdminDashboard() {
     try {
-      // 1. Fetch data
-      const stats = await fetchApi('/api/admin/analytics');
-      const posts = await fetchApi('/api/posts?status=all');
-      const news = await fetchApi('/api/news?status=all');
-      const subscribers = await fetchApi('/api/newsletter/subscribers').catch(() => []);
-      const settings = await fetchApi('/api/settings');
-
-      // Sync maintenance checkbox
-      const maintCheck = el('admin-toggle-maintenance');
-      if (maintCheck) maintCheck.checked = !!settings.maintenanceMode;
-
-      // 2. Compute Traffic metrics
-      const viewsCount = stats.totalViews || 476;
-      const totalVisitors = Math.round(viewsCount * 0.72);
-      const totalSessions = Math.round(viewsCount * 0.88);
-      const uniqueVisitors = Math.round(viewsCount * 0.42);
-
-      el('traffic-total-visitors').textContent = totalVisitors.toLocaleString('en-IN');
-      el('traffic-total-sessions').textContent = totalSessions.toLocaleString('en-IN');
-      el('traffic-unique-visitors').textContent = uniqueVisitors.toLocaleString('en-IN');
-      el('traffic-new-vs-ret').textContent = "74% / 26%";
-
-      // 3. Active Users Simulation
-      const updateActiveUsers = () => {
-        const activeCount = Math.floor(Math.random() * 11) + 8; // 8 to 18
-        const activeOnlineNowEl = el('active-online-now');
-        if (activeOnlineNowEl) activeOnlineNowEl.textContent = activeCount;
-
-        const activePagesTable = el('active-pages-table');
-        if (activePagesTable) {
-          const activePages = [
-            { path: '/', title: 'Home Page', users: Math.round(activeCount * 0.4) },
-            { path: '#news', title: 'News Hub', users: Math.round(activeCount * 0.3) },
-            { path: '#articles/sip-guide', title: 'SIP Guide', users: Math.round(activeCount * 0.2) },
-            { path: '#calculators', title: 'SIP & Lumpsum Calculator', users: Math.round(activeCount * 0.1) }
-          ].filter(p => p.users > 0);
-
-          activePagesTable.innerHTML = activePages.map(ap => `
-            <tr style="border-bottom:1px solid var(--color-border); opacity:0.85;">
-              <td style="padding:0.3rem 0; color:var(--color-accent);">${ap.path}</td>
-              <td style="text-align:right; font-weight:700;">${ap.users} active</td>
-            </tr>
-          `).join('');
-        }
+      const headers = {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
       };
 
-      if (activeUsersTimer) clearInterval(activeUsersTimer);
-      activeUsersTimer = setInterval(updateActiveUsers, 5000);
-      updateActiveUsers();
+      const days = parseInt(el('dash-period')?.value || '30');
+      const since = new Date(Date.now() - days * 86400000).toISOString();
+      const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+      const activeThreshold = new Date(Date.now() - 15 * 60000).toISOString();
 
-      // 4. Live Activity logs
-      const liveLogEl = el('live-activity-feed-list');
-      if (liveLogEl) {
-        liveLogEl.innerHTML = `
-          <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--color-border); padding-bottom:0.25rem;">
-            <span>Super Admin updated settings configuration</span>
-            <span style="opacity:0.6;">Just now</span>
-          </div>
-          <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--color-border); padding-bottom:0.25rem;">
-            <span>Anonymous reader liked news article: "S&P Index Record"</span>
-            <span style="opacity:0.6;">2 mins ago</span>
-          </div>
-          <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--color-border); padding-bottom:0.25rem;">
-            <span>New subscriber registered: user***@yahoo.com</span>
-            <span style="opacity:0.6;">1 hour ago</span>
-          </div>
-          <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--color-border); padding-bottom:0.25rem;">
-            <span>New article created: "Tax Saving checklist"</span>
-            <span style="opacity:0.6;">3 hours ago</span>
-          </div>
-        `;
+      // Parallel fetches
+      const [pvRes, usersRes, activeRes, loggedInRes, newUsersRes, postsRes, subsRes, topPagesRes, dailyRes, userGrowthRes, recentPvRes] = await Promise.all([
+        fetch(`${SUPABASE_URL}/rest/v1/page_views?created_at=gte.${since}&select=id`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/users?select=id,created_at`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/user_sessions?last_seen=gte.${activeThreshold}&select=session_id`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/user_sessions?last_seen=gte.${activeThreshold}&user_id=not.is.null&select=session_id`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/users?created_at=gte.${todayStart.toISOString()}&select=id`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/posts?status=eq.Published&select=id,title,views`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/subscribers?select=email`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/page_views?created_at=gte.${since}&select=page`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/page_views?created_at=gte.${since}&select=created_at`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/users?created_at=gte.${since}&select=created_at&order=created_at.asc`, { headers }),
+        fetch(`${SUPABASE_URL}/rest/v1/page_views?select=page,created_at,device_type,referrer&order=created_at.desc&limit=30`, { headers })
+      ]);
+
+      const pvData       = await pvRes.json().catch(() => []);
+      const usersData    = await usersRes.json().catch(() => []);
+      const activeData   = await activeRes.json().catch(() => []);
+      const loggedInData = await loggedInRes.json().catch(() => []);
+      const newUsersData = await newUsersRes.json().catch(() => []);
+      const postsData    = await postsRes.json().catch(() => []);
+      const subsData     = await subsRes.json().catch(() => []);
+      const topPagesData = await topPagesRes.json().catch(() => []);
+      const dailyData    = await dailyRes.json().catch(() => []);
+      const growthData   = await userGrowthRes.json().catch(() => []);
+      const recentPv     = await recentPvRes.json().catch(() => []);
+
+      const fmtNum = n => n >= 1000 ? (n/1000).toFixed(1)+'k' : String(n);
+
+      // ── KPI Values ──
+      const totalViews = Array.isArray(pvData) ? pvData.length : 0;
+      const totalUsers = Array.isArray(usersData) ? usersData.length : 0;
+      const activeNow  = Array.isArray(activeData) ? activeData.length : 0;
+      const loggedInNow = Array.isArray(loggedInData) ? loggedInData.length : 0;
+      const newToday   = Array.isArray(newUsersData) ? newUsersData.length : 0;
+      const publishedPosts = Array.isArray(postsData) ? postsData.length : 0;
+      const totalSubs  = Array.isArray(subsData) ? subsData.length : 0;
+
+      const setEl = (id, val) => { const e = el(id); if (e) e.textContent = val; };
+      setEl('kpi-total-views', fmtNum(totalViews));
+      setEl('kpi-users', fmtNum(totalUsers));
+      setEl('kpi-active', activeNow);
+      setEl('kpi-loggedin', loggedInNow);
+      setEl('kpi-new-today', newToday);
+      setEl('kpi-posts', publishedPosts);
+      setEl('kpi-subs', fmtNum(totalSubs));
+      setEl('dash-last-updated', `Last updated: ${new Date().toLocaleTimeString()} · ${days}-day window`);
+
+      // ── Daily/Monthly Views Chart ──
+      const dayBuckets = {};
+      for (let i = days - 1; i >= 0; i--) {
+        const d = new Date(Date.now() - i * 86400000);
+        dayBuckets[d.toISOString().slice(0,10)] = 0;
+      }
+      (Array.isArray(dailyData) ? dailyData : []).forEach(row => {
+        const day = row.created_at?.slice(0,10);
+        if (day && dayBuckets.hasOwnProperty(day)) dayBuckets[day]++;
+      });
+      const dayLabels = Object.keys(dayBuckets).map(d => d.slice(5));
+      const dayValues = Object.values(dayBuckets);
+      const totalInPeriod = dayValues.reduce((a,b)=>a+b,0);
+      setEl('views-chart-badge', `${fmtNum(totalInPeriod)} total`);
+      renderLineChart('chart-daily-views', dayLabels, dayValues, '#6366f1', 'Views');
+
+      // ── Top Pages ──
+      const pageCounts = {};
+      (Array.isArray(topPagesData) ? topPagesData : []).forEach(r => {
+        const p = r.page || 'home';
+        pageCounts[p] = (pageCounts[p] || 0) + 1;
+      });
+      const sortedPages = Object.entries(pageCounts).sort((a,b) => b[1]-a[1]).slice(0,8);
+      const maxPV = sortedPages[0]?.[1] || 1;
+      const tbody = el('top-pages-tbody');
+      if (tbody) {
+        tbody.innerHTML = sortedPages.length ? sortedPages.map(([page, count]) => {
+          const pct = Math.round((count/maxPV)*100);
+          const share = Math.round((count/Math.max(totalViews,1))*100);
+          return `<tr>
+            <td style="font-weight:600;">#${page}</td>
+            <td>${fmtNum(count)}</td>
+            <td><div style="display:flex;align-items:center;gap:.5rem;"><div class="dash-bar" style="width:${pct*0.8}px;"></div><span style="font-size:.7rem;opacity:.6;">${share}%</span></div></td>
+          </tr>`;
+        }).join('') : '<tr><td colspan="3" style="opacity:.5;text-align:center;padding:1.5rem;">No views tracked yet. Browse some pages to generate data.</td></tr>';
       }
 
-      // 5. Page Views
-      el('views-total-views').textContent = viewsCount.toLocaleString('en-IN');
-      el('views-unique-views').textContent = Math.round(viewsCount * 0.8).toLocaleString('en-IN');
-      el('views-avg-session').textContent = (viewsCount / totalSessions || 1.65).toFixed(2);
-
-      // Top viewed categories list
-      const topCatsEl = el('views-top-categories');
-      if (topCatsEl) {
-        topCatsEl.innerHTML = `
-          <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
-            <span>Investing Basics</span>
-            <strong>52%</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
-            <span>Personal Finance</span>
-            <strong>34%</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between;">
-            <span>Taxes & Retirement</span>
-            <strong>14%</strong>
-          </div>
-        `;
+      // ── Traffic Sources (Device Breakdown) ──
+      const deviceCounts = { desktop: 0, mobile: 0, tablet: 0 };
+      (Array.isArray(pvData) ? pvData : []).forEach(r => {
+        const dt = r.device_type || 'desktop';
+        if (deviceCounts.hasOwnProperty(dt)) deviceCounts[dt]++;
+      });
+      const sourceColors = ['#6366f1','#22c55e','#f59e0b'];
+      const sourceLabels = ['Desktop','Mobile','Tablet'];
+      const sourceValues = [deviceCounts.desktop, deviceCounts.mobile, deviceCounts.tablet];
+      renderDonutChart('chart-traffic-sources', sourceLabels, sourceValues, sourceColors);
+      const legend = el('traffic-sources-legend');
+      if (legend) {
+        legend.innerHTML = sourceLabels.map((l,i) => `
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${sourceColors[i]};margin-right:.4rem;"></span>${l}</span>
+            <strong>${sourceValues[i]}</strong>
+          </div>`).join('');
       }
 
-      // Top viewed pages list
-      const topPagesEl = el('views-top-pages');
-      if (topPagesEl) {
-        topPagesEl.innerHTML = `
-          <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
-            <span>/ (Home)</span>
-            <strong>42%</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
-            <span>#news</span>
-            <strong>32%</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between;">
-            <span>#articles</span>
-            <strong>26%</strong>
-          </div>
-        `;
+      // ── User Growth Chart ──
+      const growthBuckets = {};
+      for (let i = days - 1; i >= 0; i--) {
+        const d = new Date(Date.now() - i * 86400000);
+        growthBuckets[d.toISOString().slice(0,10)] = 0;
+      }
+      (Array.isArray(growthData) ? growthData : []).forEach(row => {
+        const day = row.created_at?.slice(0,10);
+        if (day && growthBuckets.hasOwnProperty(day)) growthBuckets[day]++;
+      });
+      let cumulative = 0;
+      const growthValues = Object.values(growthBuckets).map(v => { cumulative += v; return cumulative; });
+      setEl('user-growth-badge', `+${growthValues.reduce((a,b)=>a+b,0)} in ${days}d`);
+      renderLineChart('chart-user-growth', dayLabels, growthValues, '#22c55e', 'Users');
+
+      // ── Activity Timeline & Login Activity ──
+      const timeline = el('activity-timeline');
+      if (timeline) {
+        const timeAgo = ts => {
+          const diff = Date.now() - new Date(ts).getTime();
+          if (diff < 60000) return 'just now';
+          if (diff < 3600000) return Math.floor(diff/60000) + 'm ago';
+          if (diff < 86400000) return Math.floor(diff/3600000) + 'h ago';
+          return Math.floor(diff/86400000) + 'd ago';
+        };
+        const items = (Array.isArray(recentPv) ? recentPv : []).slice(0, 20).map(r => ({
+          type: 'view', page: r.page, ts: r.created_at, device: r.device_type, referrer: r.referrer || 'direct'
+        }));
+        if (items.length) {
+          timeline.innerHTML = items.map(item => `
+            <div class="activity-item">
+              <div class="activity-dot view"></div>
+              <span class="activity-text">Page viewed: <strong>#${item.page || 'home'}</strong> · ${item.device || 'desktop'} (Referrer: ${item.referrer})</span>
+              <span class="activity-time">${timeAgo(item.ts)}</span>
+            </div>`).join('');
+        } else {
+          timeline.innerHTML = '<div class="timeline-loading">No recent activity. Visit pages to start tracking.</div>';
+        }
       }
 
-      // 6. Content Performance metrics
-      const publishedCount = posts.filter(p => p.status === 'Published').length + news.filter(n => n.status === 'Publish').length;
-      const draftCount = posts.filter(p => p.status === 'Draft').length + news.filter(n => n.status === 'Draft').length;
-      const scheduledCount = posts.filter(p => p.scheduledAt).length;
-
-      el('content-stat-published').textContent = publishedCount;
-      el('content-stat-drafts').textContent = draftCount;
-      el('content-stat-scheduled').textContent = scheduledCount;
-
-      // Most read & least read lists
-      const sortedContent = [...posts, ...news].sort((a,b) => (b.views || 0) - (a.views || 0));
-      const mostReadEl = el('content-most-read');
-      if (mostReadEl) {
-        mostReadEl.innerHTML = sortedContent.slice(0, 3).map(c => `
-          <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem; font-size:0.75rem;">
-            <span style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:180px;">${c.title}</span>
-            <strong>${c.views || 0} views</strong>
-          </div>
-        `).join('');
+      // ── Popular Content & Stock Pages ──
+      const popList = el('popular-content-list');
+      if (popList) {
+        const sorted = (Array.isArray(postsData) ? postsData : [])
+          .sort((a,b) => (b.views||0) - (a.views||0)).slice(0,6);
+        popList.innerHTML = sorted.length ? sorted.map(p => `
+          <div class="popular-item">
+            <span class="popular-item-title">${p.title || 'Untitled'}</span>
+            <span class="popular-item-views">${fmtNum(p.views||0)} views</span>
+          </div>`).join('')
+          : '<div style="opacity:.5;font-size:.8rem;text-align:center;padding:1rem;">No published articles yet.</div>';
       }
 
-      const leastReadEl = el('content-least-performing');
-      if (leastReadEl) {
-        const least = [...sortedContent].reverse().slice(0, 3);
-        leastReadEl.innerHTML = least.map(c => `
-          <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem; font-size:0.75rem;">
-            <span style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:180px;">${c.title}</span>
-            <strong>${c.views || 0} views</strong>
-          </div>
-        `).join('');
-      }
-
-      const recentlyUpdatedEl = el('content-recently-updated');
-      if (recentlyUpdatedEl) {
-        recentlyUpdatedEl.innerHTML = [...posts, ...news].slice(0, 3).map(c => `
-          <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem; font-size:0.75rem; opacity:0.85;">
-            <span style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:200px;">${c.title}</span>
-            <span>${c.publishDate ? new Date(c.publishDate).toLocaleDateString() : 'Just now'}</span>
-          </div>
-        `).join('');
-      }
-
-      // 7. Latest Publications combined table
-      const latestPubTbody = el('admin-dashboard-latest-pub-tbody');
-      if (latestPubTbody) {
-        const combinedList = [
-          ...posts.map(p => ({ type: 'Article', title: p.title, date: p.placedAt || p.publishDate, author: p.authorName || 'Editor', category: 'Finance', status: p.status, slug: p.slug, id: p.id, rawType: 'post' })),
-          ...news.map(n => ({ type: 'News', title: n.title, date: n.publishDate, author: n.author, category: n.category, status: n.status, slug: n.slug, id: n.id, rawType: 'news' }))
-        ].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
-
-        latestPubTbody.innerHTML = combinedList.map(item => `
-          <tr>
-            <td><span class="user-role-badge ${item.type === 'News' ? 'admin' : 'editor'}">${item.type}</span></td>
-            <td><strong>${item.title}</strong></td>
-            <td>${new Date(item.date).toLocaleDateString()}</td>
-            <td>${item.author}</td>
-            <td>${item.category}</td>
-            <td><span class="user-role-badge ${item.status === 'Published' || item.status === 'Publish' ? 'admin' : 'user'}">${item.status}</span></td>
-            <td>
-              <div style="display:flex; gap:0.4rem;">
-                <button class="btn outline quick-edit-pub-btn" data-id="${item.id}" data-type="${item.rawType}" style="padding:0.25rem 0.5rem; font-size:0.72rem;">Quick Edit</button>
-                <a href="#${item.rawType === 'news' ? 'news/' + item.slug : 'articles/' + item.slug}" class="btn outline" style="padding:0.25rem 0.5rem; font-size:0.72rem; text-decoration:none;">View</a>
-              </div>
-            </td>
-          </tr>
-        `).join('');
-
-        latestPubTbody.querySelectorAll('.quick-edit-pub-btn').forEach(btn => {
-          btn.onclick = () => {
-            const id = btn.dataset.id;
-            const type = btn.dataset.type;
-            if (type === 'news') {
-              loadNewsToEditor(id);
-            } else {
-              loadPostToEditor(id);
-            }
-          };
-        });
-      }
-
-      // 8. Top Performing Pages Table (Top 10)
-      const topPagesTbody = el('admin-dashboard-top-pages-tbody');
-      if (topPagesTbody) {
-        const topPagesList = [
-          ...posts.map(p => ({ route: `#/articles/${p.slug}`, views: p.views || 0, unique: Math.round((p.views || 0) * 0.8), time: '3m 12s', bounce: '44.2%', source: 'Google / Organic', lastViewed: 'Just now' })),
-          ...news.map(n => ({ route: `#/news/${n.slug}`, views: n.views || 0, unique: Math.round((n.views || 0) * 0.82), time: '2m 15s', bounce: '39.8%', source: 'Twitter / Social', lastViewed: '5 mins ago' })),
-          { route: '#/calculators', views: 84, unique: 62, time: '5m 45s', bounce: '24.1%', source: 'Direct', lastViewed: '1 min ago' },
-          { route: '#/credit-cards', views: 120, unique: 94, time: '4m 10s', bounce: '31.5%', source: 'Google / Ads', lastViewed: 'Just now' }
-        ].sort((a,b) => b.views - a.views).slice(0, 10);
-
-        topPagesTbody.innerHTML = topPagesList.map(page => `
-          <tr>
-            <td><code style="color:var(--color-accent);">${page.route}</code></td>
-            <td><strong>${page.views}</strong></td>
-            <td>${page.unique}</td>
-            <td>${page.time}</td>
-            <td>${page.bounce}</td>
-            <td><span style="opacity:0.85;">${page.source}</span></td>
-            <td><span style="opacity:0.75; font-size:0.75rem;">${page.lastViewed}</span></td>
-          </tr>
-        `).join('');
-      }
-
-      // 9. Subscriber Growth section
-      const recentSubs = subscribers.length > 0 ? subscribers : [
-        { email: 'finance_fanatic@outlook.com', date: new Date().toISOString(), source: 'Home Footer' },
-        { email: 'investment_guy@gmail.com', date: new Date(Date.now() - 3600000).toISOString(), source: 'Newsletter Modal' },
-        { email: 'grow_my_money@gmail.com', date: new Date(Date.now() - 86400000).toISOString(), source: 'SIP Calculator' }
-      ];
-      el('sub-total-count').textContent = recentSubs.length;
-      el('sub-today-count').textContent = Math.round(recentSubs.length > 2 ? 3 : recentSubs.length);
-
-      const subTbody = el('subscribers-recent-tbody');
-      if (subTbody) {
-        subTbody.innerHTML = recentSubs.slice(0, 3).map(sub => `
-          <tr style="border-bottom:1px solid var(--color-border); font-size:0.78rem;">
-            <td style="padding:0.4rem 0;">${sub.email}</td>
-            <td>${new Date(sub.date).toLocaleDateString()}</td>
-            <td><span class="user-role-badge user">${sub.source || 'Newsletter Banner'}</span></td>
-          </tr>
-        `).join('');
-      }
-
-      // CSV Export handler
-      el('btn-export-subscribers-csv').onclick = () => {
-        let csv = "Email Address,Registered Date,Source\n";
-        recentSubs.forEach(s => {
-          csv += `"${s.email}","${new Date(s.date).toLocaleString()}","${s.source || 'Newsletter Banner'}"\n`;
-        });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.setAttribute("download", `subscribers_list_${new Date().toISOString().substring(0,10)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showToast('Subscriber list exported successfully.');
-      };
-
-      // Country breakdown & Browser usage
-      const countriesList = el('analytics-countries-list');
-      if (countriesList) {
-        countriesList.innerHTML = `
-          <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
-            <span>🇮🇳 India</span>
-            <strong>62%</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
-            <span>🇺🇸 United States</span>
-            <strong>24%</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between;">
-            <span>🇬🇧 United Kingdom</span>
-            <strong>14%</strong>
-          </div>
-        `;
-      }
-
-      const browsersList = el('analytics-browsers-list');
-      if (browsersList) {
-        browsersList.innerHTML = `
-          <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
-            <span>Chrome</span>
-            <strong>70%</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between; margin-bottom:0.25rem;">
-            <span>Safari</span>
-            <strong>18%</strong>
-          </div>
-          <div style="display:flex; justify-content:space-between;">
-            <span>Firefox / Edge</span>
-            <strong>12%</strong>
-          </div>
-        `;
-      }
-
-
-      // 11. INITIALIZE CHART.JS CHARTS
-      renderDashboardCharts(totalVisitors, viewsCount);
-
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error('Dashboard error:', err);
+      showToast('Dashboard load failed: ' + err.message, 'error');
     }
+
+    // Refresh button
+    const refreshBtn = el('dash-refresh-btn');
+    if (refreshBtn) refreshBtn.onclick = () => renderAdminDashboard();
+    const periodSel = el('dash-period');
+    if (periodSel) periodSel.onchange = () => renderAdminDashboard();
   }
 
-  function renderDashboardCharts(totalVisitors, viewsCount) {
-    if (!window.Chart) return;
-
-    // Destroy existing instances to avoid hovering rendering bugs
-    if (window.myAdminCharts) {
-      Object.keys(window.myAdminCharts).forEach(key => {
-        if (window.myAdminCharts[key]) window.myAdminCharts[key].destroy();
-      });
-    }
-    window.myAdminCharts = {};
-
-    // A. chart-traffic-visitors (Line Chart)
-    const trafficCtx = el('chart-traffic-visitors')?.getContext('2d');
-    if (trafficCtx) {
-      window.myAdminCharts.traffic = new Chart(trafficCtx, {
-        type: 'line',
-        data: {
-          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-          datasets: [{
-            label: 'Daily Visitors',
-            data: [
-              Math.round(totalVisitors * 0.12),
-              Math.round(totalVisitors * 0.14),
-              Math.round(totalVisitors * 0.18),
-              Math.round(totalVisitors * 0.15),
-              Math.round(totalVisitors * 0.22),
-              Math.round(totalVisitors * 0.11),
-              Math.round(totalVisitors * 0.08)
-            ],
-            borderColor: '#0078d4',
-            backgroundColor: 'rgba(0,120,212,0.06)',
-            tension: 0.4,
-            fill: true,
-            borderWidth: 2.5
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: { display: false } },
-            y: { grid: { borderDash: [4, 4] } }
-          }
-        }
-      });
-    }
-
-    // B. chart-page-views-trend (Line Chart)
-    const viewsCtx = el('chart-page-views-trend')?.getContext('2d');
-    if (viewsCtx) {
-      window.myAdminCharts.pageviews = new Chart(viewsCtx, {
-        type: 'line',
-        data: {
-          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-          datasets: [{
-            label: 'Page Views',
-            data: [
-              Math.round(viewsCount * 0.11),
-              Math.round(viewsCount * 0.15),
-              Math.round(viewsCount * 0.20),
-              Math.round(viewsCount * 0.16),
-              Math.round(viewsCount * 0.24),
-              Math.round(viewsCount * 0.09),
-              Math.round(viewsCount * 0.05)
-            ],
-            borderColor: '#10b981',
-            backgroundColor: 'rgba(16,185,129,0.05)',
-            tension: 0.35,
-            fill: true,
-            borderWidth: 2
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: { display: false } },
-            y: { grid: { borderDash: [4, 4] } }
-          }
-        }
-      });
-    }
-
-    // C. chart-subscriber-trend (Line Chart)
-    const subCtx = el('chart-subscriber-trend')?.getContext('2d');
-    if (subCtx) {
-      window.myAdminCharts.subscribers = new Chart(subCtx, {
-        type: 'line',
-        data: {
-          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-          datasets: [{
-            label: 'Signups',
-            data: [1, 2, 4, 3, 5, 2, 1],
-            borderColor: '#f59e0b',
-            backgroundColor: 'rgba(245,158,11,0.05)',
-            tension: 0.4,
-            fill: true,
-            borderWidth: 2
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: { display: false } },
-            y: { grid: { borderDash: [4, 4] } }
-          }
-        }
-      });
-    }
-
-    // D. chart-traffic-sources (Doughnut Chart)
-    const sourcesCtx = el('chart-traffic-sources')?.getContext('2d');
-    if (sourcesCtx) {
-      window.myAdminCharts.sources = new Chart(sourcesCtx, {
-        type: 'doughnut',
-        data: {
-          labels: ['Organic Search', 'Direct', 'Referral', 'Social Media'],
-          datasets: [{
-            data: [45, 30, 15, 10],
-            backgroundColor: ['#0078d4', '#10b981', '#f59e0b', '#8b5cf6'],
-            borderWidth: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } }
-          },
-          cutout: '70%'
-        }
-      });
-    }
+  // ── Chart helpers ─────────────────────────────────────────────────────
+  function renderLineChart(canvasId, labels, values, color, label) {
+    const canvas = el(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth || 600;
+    canvas.height = canvas.offsetHeight || 220;
+    const w = canvas.width, h = canvas.height;
+    const pad = { top: 20, right: 20, bottom: 30, left: 40 };
+    ctx.clearRect(0, 0, w, h);
+    const max = Math.max(...values, 1);
+    const xStep = (w - pad.left - pad.right) / Math.max(labels.length - 1, 1);
+    const yScale = (h - pad.top - pad.bottom) / max;
+    const pts = values.map((v, i) => ({ x: pad.left + i * xStep, y: h - pad.bottom - v * yScale }));
+    const grad = ctx.createLinearGradient(0, pad.top, 0, h - pad.bottom);
+    grad.addColorStop(0, color + '40');
+    grad.addColorStop(1, color + '00');
+    ctx.beginPath();
+    pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+    ctx.lineTo(pts[pts.length-1].x, h - pad.bottom);
+    ctx.lineTo(pts[0].x, h - pad.bottom);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.beginPath();
+    pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(150,150,180,0.7)';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    const step = Math.ceil(labels.length / 8);
+    labels.forEach((l, i) => { if (i % step === 0) ctx.fillText(l, pts[i].x, h - 8); });
   }
 
-  // ── 2. Articles Subpanel ──
-  async function renderAdminPostsTable() {
+  function renderDonutChart(canvasId, labels, values, colors) {
+    const canvas = el(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth || 200;
+    canvas.height = canvas.offsetHeight || 170;
+    const cx = canvas.width / 2, cy = canvas.height / 2;
+    const r = Math.min(cx, cy) - 15;
+    const inner = r * 0.55;
+    const total = values.reduce((a, b) => a + b, 0) || 1;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let startAngle = -Math.PI / 2;
+    values.forEach((v, i) => {
+      const slice = (v / total) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, startAngle, startAngle + slice);
+      ctx.closePath();
+      ctx.fillStyle = colors[i];
+      ctx.fill();
+      startAngle += slice;
+    });
+    ctx.beginPath();
+    ctx.arc(cx, cy, inner, 0, Math.PI * 2);
+    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--color-bg-panel') || '#1a1a2e';
+    ctx.fill();
+    ctx.fillStyle = 'rgba(200,200,220,0.9)';
+    ctx.font = `bold ${Math.round(r*0.3)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(total, cx, cy);
+  }
+
+  // ── 1. Dashboard Subpanel ──  async function renderAdminPostsTable() {
     const posts = await fetchApi('/api/posts?status=all');
     const categories = await fetchApi('/api/categories');
     const tbody = el('admin-posts-tbody');
