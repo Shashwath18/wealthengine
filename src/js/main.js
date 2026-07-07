@@ -1,6 +1,7 @@
 /* ==============================================
    WEALTHENGINE — Client Engine, Router & Tools
    main.js
+   Triggering clean UTF-8 Vercel build
    ============================================== */
 
 (function () {
