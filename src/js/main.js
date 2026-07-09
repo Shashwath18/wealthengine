@@ -490,6 +490,7 @@
 
     state.activeView = viewName;
     updatePageDisclaimer(viewName);
+    trackPageView(viewName);
     
     // Clear Ads
     await fetchAdsenseSettings();
