@@ -1825,8 +1825,8 @@
       await fetch(`${SUPABASE_URL}/rest/v1/page_views`, {
         method: 'POST',
         headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
           'Content-Type': 'application/json',
           'Prefer': 'return=minimal'
         },
@@ -1836,8 +1836,8 @@
       await fetch(`${SUPABASE_URL}/rest/v1/user_sessions`, {
         method: 'POST',
         headers: {
-          'apikey': SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
           'Content-Type': 'application/json',
           'Prefer': 'resolution=merge-duplicates'
         },
@@ -1858,8 +1858,8 @@
   async function renderAdminDashboard() {
     try {
       const headers = {
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
       };
 
       const days = parseInt(el('dash-period')?.value || '30');
