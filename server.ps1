@@ -84,7 +84,8 @@ function Verify-SessionToken($token) {
 $defaultCategories = @(
     @{ id = "cat-1"; name = "Personal Finance"; slug = "personal-finance"; description = "Master budgeting, emergency reserves, debt payoff, and savings techniques." },
     @{ id = "cat-2"; name = "Investing"; slug = "investing"; description = "Explore long-term wealth accumulation strategies, stock market terms, ETFs, and SIPs." },
-    @{ id = "cat-3"; name = "Taxes & Retirement"; slug = "taxes-retirement"; description = "Navigate tax structures, tax saving investments, and FIRE planning formulas." }
+    @{ id = "cat-3"; name = "Taxes & Retirement"; slug = "taxes-retirement"; description = "Navigate tax structures, tax saving investments, and FIRE planning formulas." },
+    @{ id = "cat-4"; name = "Credit Cards"; slug = "credit-cards"; description = "Guides and reviews of credit card features, reward rates, and optimization strategies." }
 )
 $null = Get-DbFile "categories" (ConvertTo-Json $defaultCategories -Depth 5 -Compress)
 
