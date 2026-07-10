@@ -2106,7 +2106,8 @@
     ctx.fillText(total, cx, cy);
   }
 
-  // ── 1. Dashboard Subpanel ──  async function renderAdminPostsTable() {
+  // ── 1. Dashboard Subpanel ──
+  async function renderAdminPostsTable() {
     const posts = await fetchApi('/api/posts?status=all');
     const categories = await fetchApi('/api/categories');
     const tbody = el('admin-posts-tbody');
