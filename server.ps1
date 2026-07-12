@@ -1,5 +1,5 @@
-# ==============================================
-# WEALTHENGINE — FINANCE & INVESTING PLATFORM SERVER
+﻿# ==============================================
+# WEALTHENGINE â€” FINANCE & INVESTING PLATFORM SERVER
 # server.ps1
 # ==============================================
 
@@ -16,13 +16,43 @@ if (!(Test-Path $dbDir)) { New-Item -ItemType Directory -Path $dbDir | Out-Null 
 if (!(Test-Path $uploadDir)) { New-Item -ItemType Directory -Path $uploadDir | Out-Null }
 
 # --- DATABASE HELPERS ---
-function Get-DbFile($name, $defaultJson = "[]") {
-    $filePath = Join-Path $dbDir "$name.json"
+function Get-DbFile($name, $defaultJson = '[]') {
+    $filePath = Join-Path $dbDir ($name + '.json')
     if (Test-Path $filePath) {
-        return Get-Content $filePath -Raw -Encoding UTF8
+        $content = Get-Content $filePath -Raw -Encoding UTF8
+        if ($null -ne $content -and $content.Trim() -ne '') {
+            return $content
+        }
     }
     Set-Content $filePath -Value $defaultJson -Encoding UTF8
     return $defaultJson
+}
+
+function Get-DbList($name, $defaultJson = '[]') {
+    $json = Get-DbFile $name $defaultJson
+    $parsed = ConvertFrom-Json $json
+    $list = New-Object System.Collections.ArrayList
+    if ($null -ne $parsed) {
+        if ($parsed -is [System.Collections.IList] -or $parsed -is [System.Array]) {
+            foreach ($item in $parsed) {
+                $list.Add($item) | Out-Null
+            }
+        } else {
+            $list.Add($parsed) | Out-Null
+        }
+    }
+    return ,$list
+}
+
+function ConvertTo-JsonArray($list) {
+    if ($null -eq $list -or ($list -is [System.Collections.ICollection] -and $list.Count -eq 0)) {
+        return '[]'
+    }
+    $json = ConvertTo-Json -InputObject $list -Depth 5 -Compress
+    if ($json.StartsWith('[') -and $json.EndsWith(']')) {
+        return $json
+    }
+    return '[' + $json + ']'
 }
 
 function Save-DbFile($name, $json) {
@@ -87,7 +117,7 @@ $defaultCategories = @(
     @{ id = "cat-3"; name = "Taxes & Retirement"; slug = "taxes-retirement"; description = "Navigate tax structures, tax saving investments, and FIRE planning formulas." },
     @{ id = "cat-4"; name = "Credit Cards"; slug = "credit-cards"; description = "Guides and reviews of credit card features, reward rates, and optimization strategies." }
 )
-$null = Get-DbFile "categories" (ConvertTo-Json $defaultCategories -Depth 5 -Compress)
+$null = Get-DbFile "categories" (ConvertTo-JsonArray $defaultCategories)
 
 # Glossary Terms Seed
 $defaultGlossary = @(
@@ -122,7 +152,7 @@ $defaultGlossary = @(
     @{ term = "Risk Tolerance"; title = "Risk Capacity Quiz"; definition = "The degree of variability in investment returns that an investor is willing to withstand in their financial planning." },
     @{ term = "Volatility"; title = "Market Volatility Index"; definition = "A statistical measure of the dispersion of returns for a given security or market index, representing rate variations." }
 )
-$null = Get-DbFile "glossary" (ConvertTo-Json $defaultGlossary -Depth 5 -Compress)
+$null = Get-DbFile "glossary" (ConvertTo-JsonArray $defaultGlossary)
 
 # Default Settings (Anonymized & Cleaned)
 $defaultSettings = @{
@@ -132,7 +162,7 @@ $defaultSettings = @{
     adBannerCode = ""
     adSidebarCode = ""
 }
-$null = Get-DbFile "settings" (ConvertTo-Json $defaultSettings -Depth 5 -Compress)
+$null = Get-DbFile "settings" (ConvertTo-JsonArray $defaultSettings)
 
 # Default Credit Cards Seed
 $defaultCards = @(
@@ -150,12 +180,12 @@ $defaultCards = @(
         minIncome = 30000
         creditScore = 750
         welcomeBonus = "10,000 Reward Points on joining"
-        rewardRate = "4 points per ₹150 spent"
+        rewardRate = "4 points per â‚¹150 spent"
         cashback = "1% general cashback"
         airportLounge = "4 complimentary visits per year"
         fuelBenefits = "1% fuel surcharge waiver"
         diningBenefits = "Up to 20% discount at partner restaurants"
-        travelBenefits = "Complimentary travel insurance up to ₹50 Lakhs"
+        travelBenefits = "Complimentary travel insurance up to â‚¹50 Lakhs"
         movieBenefits = "Buy 1 Get 1 free movie ticket monthly"
         insuranceBenefits = "Air accident cover"
         forexFee = 2.5
@@ -167,7 +197,7 @@ $defaultCards = @(
         samsungWallet = $false
         pros = "High reward rate on dining, complimentary lounge access"
         cons = "High annual fee, high APR on unpaid balances"
-        eligibility = "Income ₹30,000+ per month, age 21-65"
+        eligibility = "Income â‚¹30,000+ per month, age 21-65"
         documents = "PAN card, Aadhaar card, Form 16 / Salary slips"
         howToApply = "Apply online via Apex Bank web portal or visit branch."
         website = "https://example.com/apex-rewards"
@@ -188,7 +218,7 @@ $defaultCards = @(
         interestFreeDays = 45
         minIncome = 20000
         creditScore = 700
-        welcomeBonus = "₹500 cashback on first swipe"
+        welcomeBonus = "â‚¹500 cashback on first swipe"
         rewardRate = "5% cashback on online purchases"
         cashback = "5% online, 1.5% offline"
         airportLounge = "No lounge access"
@@ -206,7 +236,7 @@ $defaultCards = @(
         samsungWallet = $true
         pros = "Lifetime free card, industry-leading 5% online cashback"
         cons = "No airport lounge access, high foreign transaction fees"
-        eligibility = "Income ₹20,000+ per month, age 18-60"
+        eligibility = "Income â‚¹20,000+ per month, age 18-60"
         documents = "Identity proof, Income tax return / salary slips"
         howToApply = "Instant online approval on Unity Bank portal."
         website = "https://example.com/cashback-max"
@@ -215,7 +245,7 @@ $defaultCards = @(
         slug = "emerald-cashback-max"
     }
 )
-$null = Get-DbFile "cards" (ConvertTo-Json $defaultCards -Depth 5 -Compress)
+$null = Get-DbFile "cards" (ConvertTo-JsonArray $defaultCards)
 
 # Default Admin User
 $adminSalt = "admin_salt_7777"
@@ -235,7 +265,7 @@ $defaultUsers = @(
         history = @()
     }
 )
-$null = Get-DbFile "users" (ConvertTo-Json $defaultUsers -Depth 5 -Compress)
+$null = Get-DbFile "users" (ConvertTo-JsonArray $defaultUsers)
 
 # Default Articles
 $defaultPosts = @(
@@ -276,7 +306,7 @@ $defaultPosts = @(
         placedAt = ([DateTime]::UtcNow.AddDays(-4).ToString("o"))
     }
 )
-$null = Get-DbFile "posts" (ConvertTo-Json $defaultPosts -Depth 5 -Compress)
+$null = Get-DbFile "posts" (ConvertTo-JsonArray $defaultPosts)
 
 # --- RESPONSE HELPERS ---
 function Send-JsonResponseString($response, $statusCode, $jsonString) {
@@ -376,11 +406,11 @@ while ($listener.IsListening) {
         Write-Output "[$method] $urlPath"
         
         try {
-            # ── 1. AUTH API ──
+            # â”€â”€ 1. AUTH API â”€â”€
             if ($urlPath -eq "/api/auth/register") {
                 if ($method -eq "POST") {
                     $reg = ConvertFrom-Json $body
-                    $users = ConvertFrom-Json (Get-DbFile "users")
+                    $users = Get-DbList "users" "[]"
                     
                     if ($users | Where-Object { $_.email -eq $reg.email }) {
                         Send-JsonResponse $response 400 @{ error = "Email already registered." }
@@ -388,7 +418,7 @@ while ($listener.IsListening) {
                         $salt = [Guid]::NewGuid().ToString().Substring(0, 8)
                         $hash = Get-Sha256Hash $reg.password $salt
                         
-                        $newUser = @{
+                        $newUser = [PSCustomObject]@{
                             id = "usr-" + [Guid]::NewGuid().ToString().Substring(0, 8)
                             email = $reg.email
                             name = $reg.name
@@ -402,8 +432,8 @@ while ($listener.IsListening) {
                             history = @()
                         }
                         
-                        $users += $newUser
-                        Save-DbFile "users" (ConvertTo-Json $users -Depth 5 -Compress)
+                        $users.Add($newUser) | Out-Null
+                        Save-DbFile "users" (ConvertTo-JsonArray $users)
                         
                         $token = New-SessionToken $newUser.email $newUser.role
                         Send-JsonResponse $response 200 @{ token = $token; user = @{ email = $newUser.email; name = $newUser.name; role = $newUser.role } }
@@ -413,7 +443,7 @@ while ($listener.IsListening) {
             elseif ($urlPath -eq "/api/auth/login") {
                 if ($method -eq "POST") {
                     $login = ConvertFrom-Json $body
-                    $users = ConvertFrom-Json (Get-DbFile "users")
+                    $users = Get-DbList "users" "[]"
                     $user = $users | Where-Object { $_.email -eq $login.email }
                     
                     if ($null -eq $user) {
@@ -434,7 +464,7 @@ while ($listener.IsListening) {
                     if ($null -eq $currentUser) {
                         Send-JsonResponse $response 401 @{ error = "Unauthorized." }
                     } else {
-                        $users = ConvertFrom-Json (Get-DbFile "users")
+                        $users = Get-DbList "users" "[]"
                         $user = $users | Where-Object { $_.email -eq $currentUser.email }
                         if ($null -eq $user) {
                             Send-JsonResponse $response 404 @{ error = "User not found." }
@@ -459,9 +489,9 @@ while ($listener.IsListening) {
                         Send-JsonResponse $response 401 @{ error = "Unauthorized." }
                     } else {
                         $profileData = ConvertFrom-Json $body
-                        $users = ConvertFrom-Json (Get-DbFile "users")
+                        $users = Get-DbList "users" "[]"
                         
-                        for ($idx = 0; $idx -lt $users.Length; $idx++) {
+                        for ($idx = 0; $idx -lt $users.Count; $idx++) {
                             if ($users[$idx].email -eq $currentUser.email) {
                                 if ($null -ne $profileData.name) { $users[$idx].name = $profileData.name }
                                 if ($null -ne $profileData.bio) { $users[$idx].bio = $profileData.bio }
@@ -483,16 +513,16 @@ while ($listener.IsListening) {
                                 break
                             }
                         }
-                        Save-DbFile "users" (ConvertTo-Json $users -Depth 5 -Compress)
+                        Save-DbFile "users" (ConvertTo-JsonArray $users)
                         Send-JsonResponse $response 200 @{ success = $true; message = "Profile updated." }
                     }
                 }
             }
 
-            # ── 2. ARTICLES API ──
+            # â”€â”€ 2. ARTICLES API â”€â”€
             elseif ($urlPath -eq "/api/posts") {
                 if ($method -eq "GET") {
-                    $posts = ConvertFrom-Json (Get-DbFile "posts")
+                    $posts = Get-DbList "posts" "[]"
                     
                     $status = $request.QueryString["status"]
                     $category = $request.QueryString["category"]
@@ -532,12 +562,12 @@ while ($listener.IsListening) {
                         Send-JsonResponse $response 403 @{ error = "Forbidden." }
                     } else {
                         $postObj = ConvertFrom-Json $body
-                        $posts = ConvertFrom-Json (Get-DbFile "posts")
+                        $posts = Get-DbList "posts" "[]"
                         
                         $slug = $postObj.title.ToLower().Replace(" ", "-").Replace("?", "").Replace("!", "").Replace("/", "-")
                         $slug = [Regex]::Replace($slug, "[^a-z0-9\-]", "")
                         
-                        $newPost = @{
+                        $newPost = [PSCustomObject]@{
                             id = "post-" + [Guid]::NewGuid().ToString().Substring(0, 8)
                             title = $postObj.title
                             slug = $slug
@@ -556,8 +586,8 @@ while ($listener.IsListening) {
                             placedAt = ([DateTime]::UtcNow.ToString("o"))
                         }
                         
-                        $posts += $newPost
-                        Save-DbFile "posts" (ConvertTo-Json $posts -Depth 5 -Compress)
+                        $posts.Add($newPost) | Out-Null
+                        Save-DbFile "posts" (ConvertTo-JsonArray $posts)
                         Send-JsonResponse $response 200 $newPost
                     }
                 }
@@ -566,7 +596,7 @@ while ($listener.IsListening) {
                 $slug = $request.QueryString["slug"]
                 $id = $request.QueryString["id"]
                 
-                $posts = ConvertFrom-Json (Get-DbFile "posts")
+                $posts = Get-DbList "posts" "[]"
                 $post = $null
                 
                 if ($null -ne $slug) {
@@ -580,7 +610,7 @@ while ($listener.IsListening) {
                 } else {
                     if ($method -eq "GET") {
                         $post.views = $post.views + 1
-                        Save-DbFile "posts" (ConvertTo-Json $posts -Depth 5 -Compress)
+                        Save-DbFile "posts" (ConvertTo-JsonArray $posts)
                         Send-JsonResponse $response 200 $post
                     }
                     elseif ($method -eq "PUT") {
@@ -597,7 +627,7 @@ while ($listener.IsListening) {
                             $post.tags = $updated.tags
                             $post.readingTime = [Math]::Max(1, [Math]::Round(($updated.content.Split(" ").Length) / 200))
                             
-                            Save-DbFile "posts" (ConvertTo-Json $posts -Depth 5 -Compress)
+                            Save-DbFile "posts" (ConvertTo-JsonArray $posts)
                             Send-JsonResponse $response 200 $post
                         }
                     }
@@ -606,7 +636,7 @@ while ($listener.IsListening) {
                             Send-JsonResponse $response 403 @{ error = "Forbidden." }
                         } else {
                             $newPosts = $posts | Where-Object { $_.id -ne $post.id }
-                            Save-DbFile "posts" (ConvertTo-Json $newPosts -Depth 5 -Compress)
+                            Save-DbFile "posts" (ConvertTo-JsonArray $newPosts)
                             Send-JsonResponse $response 200 @{ success = $true }
                         }
                     }
@@ -615,7 +645,7 @@ while ($listener.IsListening) {
             elseif ($urlPath -eq "/api/posts/interaction") {
                 if ($method -eq "POST") {
                     $action = ConvertFrom-Json $body
-                    $posts = ConvertFrom-Json (Get-DbFile "posts")
+                    $posts = Get-DbList "posts" "[]"
                     $post = $posts | Where-Object { $_.id -eq $action.postId }
                     
                     if ($null -eq $post) {
@@ -623,16 +653,16 @@ while ($listener.IsListening) {
                     } else {
                         if ($action.type -eq "like") { $post.likes = $post.likes + 1 }
                         elseif ($action.type -eq "clap") { $post.claps = $post.claps + 1 }
-                        Save-DbFile "posts" (ConvertTo-Json $posts -Depth 5 -Compress)
+                        Save-DbFile "posts" (ConvertTo-JsonArray $posts)
                         Send-JsonResponse $response 200 @{ success = $true; likes = $post.likes; claps = $post.claps }
                     }
                 }
             }
 
-            # ── 2B. NEWS MODULE API ──
+            # â”€â”€ 2B. NEWS MODULE API â”€â”€
             elseif ($urlPath -eq "/api/news") {
                 if ($method -eq "GET") {
-                    $newsList = @(ConvertFrom-Json (Get-DbFile "news" "[]"))
+                    $newsList = Get-DbList "news" "[]"
                     
                     $status = $request.QueryString["status"]
                     $category = $request.QueryString["category"]
@@ -687,12 +717,12 @@ while ($listener.IsListening) {
                         Send-JsonResponse $response 403 @{ error = "Forbidden." }
                     } else {
                         $newsObj = ConvertFrom-Json $body
-                        $newsList = @(ConvertFrom-Json (Get-DbFile "news" "[]"))
+                        $newsList = Get-DbList "news" "[]"
                         
                         $slug = $newsObj.title.ToLower().Replace(" ", "-").Replace("?", "").Replace("!", "").Replace("/", "-")
                         $slug = [Regex]::Replace($slug, "[^a-z0-9\-]", "")
                         
-                        $newNews = @{
+                        $newNews = [PSCustomObject]@{
                             id = "news-" + [Guid]::NewGuid().ToString().Substring(0, 8)
                             title = $newsObj.title
                             slug = $slug
@@ -715,8 +745,8 @@ while ($listener.IsListening) {
                             canonicalUrl = if ($null -ne $newsObj.canonicalUrl -and $newsObj.canonicalUrl -ne "") { $newsObj.canonicalUrl } else { "http://localhost:8083/#news/" + $slug }
                         }
                         
-                        $newsList += $newNews
-                        Save-DbFile "news" (ConvertTo-Json $newsList -Depth 5 -Compress)
+                        $newsList.Add($newNews) | Out-Null
+                        Save-DbFile "news" (ConvertTo-JsonArray $newsList)
                         Send-JsonResponse $response 200 $newNews
                     }
                 }
@@ -725,7 +755,7 @@ while ($listener.IsListening) {
                 $slug = $request.QueryString["slug"]
                 $id = $request.QueryString["id"]
                 
-                $newsList = @(ConvertFrom-Json (Get-DbFile "news" "[]"))
+                $newsList = Get-DbList "news" "[]"
                 $newsItem = $null
                 
                 if ($null -ne $slug) {
@@ -739,7 +769,7 @@ while ($listener.IsListening) {
                 } else {
                     if ($method -eq "GET") {
                         $newsItem.views = $newsItem.views + 1
-                        Save-DbFile "news" (ConvertTo-Json $newsList -Depth 5 -Compress)
+                        Save-DbFile "news" (ConvertTo-JsonArray $newsList)
                         Send-JsonResponse $response 200 $newsItem
                     }
                     elseif ($method -eq "PUT") {
@@ -764,7 +794,7 @@ while ($listener.IsListening) {
                             $newsItem.canonicalUrl = $updated.canonicalUrl
                             $newsItem.readingTime = [Math]::Max(1, [Math]::Round(($updated.content.Split(" ").Length) / 200))
                             
-                            Save-DbFile "news" (ConvertTo-Json $newsList -Depth 5 -Compress)
+                            Save-DbFile "news" (ConvertTo-JsonArray $newsList)
                             Send-JsonResponse $response 200 $newsItem
                         }
                     }
@@ -773,7 +803,7 @@ while ($listener.IsListening) {
                             Send-JsonResponse $response 403 @{ error = "Forbidden." }
                         } else {
                             $newNewsList = $newsList | Where-Object { $_.id -ne $newsItem.id }
-                            Save-DbFile "news" (ConvertTo-Json $newNewsList -Depth 5 -Compress)
+                            Save-DbFile "news" (ConvertTo-JsonArray $newNewsList)
                             Send-JsonResponse $response 200 @{ success = $true }
                         }
                     }
@@ -782,24 +812,24 @@ while ($listener.IsListening) {
             elseif ($urlPath -eq "/api/news/interaction") {
                 if ($method -eq "POST") {
                     $action = ConvertFrom-Json $body
-                    $newsList = @(ConvertFrom-Json (Get-DbFile "news" "[]"))
+                    $newsList = Get-DbList "news" "[]"
                     $newsItem = $newsList | Where-Object { $_.id -eq $action.newsId }
                     
                     if ($null -eq $newsItem) {
                         Send-JsonResponse $response 404 @{ error = "News article not found." }
                     } else {
                         if ($action.type -eq "like") { $newsItem.likes = $newsItem.likes + 1 }
-                        Save-DbFile "news" (ConvertTo-Json $newsList -Depth 5 -Compress)
+                        Save-DbFile "news" (ConvertTo-JsonArray $newsList)
                         Send-JsonResponse $response 200 @{ success = $true; likes = $newsItem.likes }
                     }
                 }
             }
 
-            # ── 3. GLOSSARY TERM DEFINITIONS API ──
+            # â”€â”€ 3. GLOSSARY TERM DEFINITIONS API â”€â”€
             elseif ($urlPath -eq "/api/glossary") {
                 if ($method -eq "GET") {
                     $q = $request.QueryString["q"]
-                    $glossary = ConvertFrom-Json (Get-DbFile "glossary")
+                    $glossary = Get-DbList "glossary" "[]"
                     if ($null -ne $q -and $q -ne "") {
                         $qLower = $q.ToLower()
                         $glossary = $glossary | Where-Object { 
@@ -815,7 +845,7 @@ while ($listener.IsListening) {
                         Send-JsonResponse $response 403 @{ error = "Forbidden." }
                     } else {
                         $termObj = ConvertFrom-Json $body
-                        $glossary = ConvertFrom-Json (Get-DbFile "glossary")
+                        $glossary = Get-DbList "glossary" "[]"
                         
                         $newTerm = @{
                             term = $termObj.term.ToUpper()
@@ -823,18 +853,18 @@ while ($listener.IsListening) {
                             definition = $termObj.definition
                         }
                         
-                        $glossary += $newTerm
-                        Save-DbFile "glossary" (ConvertTo-Json $glossary -Depth 5 -Compress)
+                        $glossary.Add($newTerm) | Out-Null
+                        Save-DbFile "glossary" (ConvertTo-JsonArray $glossary)
                         Send-JsonResponse $response 200 $newTerm
                     }
                 }
             }
 
-            # ── 4. COMMENTS API ──
+            # â”€â”€ 4. COMMENTS API â”€â”€
             elseif ($urlPath -eq "/api/comments") {
                 if ($method -eq "GET") {
                     $postId = $request.QueryString["postId"]
-                    $comments = ConvertFrom-Json (Get-DbFile "comments")
+                    $comments = Get-DbList "comments" "[]"
                     
                     $filtered = $comments
                     if ($null -ne $postId -and $postId -ne "") {
@@ -850,7 +880,7 @@ while ($listener.IsListening) {
                         Send-JsonResponse $response 401 @{ error = "Unauthorized." }
                     } else {
                         $commReq = ConvertFrom-Json $body
-                        $comments = ConvertFrom-Json (Get-DbFile "comments")
+                        $comments = Get-DbList "comments" "[]"
                         
                         $newComment = @{
                             id = "comm-" + [Guid]::NewGuid().ToString().Substring(0, 8)
@@ -863,8 +893,8 @@ while ($listener.IsListening) {
                             placedAt = ([DateTime]::UtcNow.ToString("o"))
                         }
                         
-                        $comments += $newComment
-                        Save-DbFile "comments" (ConvertTo-Json $comments -Depth 5 -Compress)
+                        $comments.Add($newComment) | Out-Null
+                        Save-DbFile "comments" (ConvertTo-JsonArray $comments)
                         Send-JsonResponse $response 200 $newComment
                     }
                 }
@@ -875,11 +905,11 @@ while ($listener.IsListening) {
                         Send-JsonResponse $response 403 @{ error = "Forbidden." }
                     } else {
                         $action = ConvertFrom-Json $body
-                        $comments = ConvertFrom-Json (Get-DbFile "comments")
+                        $comments = Get-DbList "comments" "[]"
                         
                         if ($action.action -eq "delete") {
                             $newComments = $comments | Where-Object { $_.id -ne $action.commentId }
-                            Save-DbFile "comments" (ConvertTo-Json $newComments -Depth 5 -Compress)
+                            Save-DbFile "comments" (ConvertTo-JsonArray $newComments)
                             Send-JsonResponse $response 200 @{ success = $true }
                         } else {
                             $comment = $comments | Where-Object { $_.id -eq $action.commentId }
@@ -887,14 +917,14 @@ while ($listener.IsListening) {
                                 if ($action.action -eq "approve") { $comment.status = "Approved" }
                                 elseif ($action.action -eq "reject") { $comment.status = "Rejected" }
                             }
-                            Save-DbFile "comments" (ConvertTo-Json $comments -Depth 5 -Compress)
+                            Save-DbFile "comments" (ConvertTo-JsonArray $comments)
                             Send-JsonResponse $response 200 @{ success = $true }
                         }
                     }
                 }
             }
 
-            # ── 5. SETTINGS & ADSENSE AD CODES ──
+            # â”€â”€ 5. SETTINGS & ADSENSE AD CODES â”€â”€
             elseif ($urlPath -eq "/api/settings") {
                 if ($method -eq "GET") {
                     $settings = Get-DbFile "settings"
@@ -910,11 +940,11 @@ while ($listener.IsListening) {
                 }
             }
 
-            # ── 6. NEWSLETTER SYSTEM ──
+            # â”€â”€ 6. NEWSLETTER SYSTEM â”€â”€
             elseif ($urlPath -eq "/api/newsletter/subscribe") {
                 if ($method -eq "POST") {
                     $subReq = ConvertFrom-Json $body
-                    $subscribers = ConvertFrom-Json (Get-DbFile "subscribers")
+                    $subscribers = Get-DbList "subscribers" "[]"
                     
                     if ($subscribers | Where-Object { $_.email -eq $subReq.email }) {
                         Send-JsonResponse $response 200 @{ success = $true; message = "Already subscribed." }
@@ -925,8 +955,8 @@ while ($listener.IsListening) {
                             status = "Active"
                             subscribedAt = ([DateTime]::UtcNow.ToString("o"))
                         }
-                        $subscribers += $newSub
-                        Save-DbFile "subscribers" (ConvertTo-Json $subscribers -Depth 5 -Compress)
+                        $subscribers.Add($newSub) | Out-Null
+                        Save-DbFile "subscribers" (ConvertTo-JsonArray $subscribers)
                         Send-JsonResponse $response 200 @{ success = $true; message = "Successfully subscribed to drops." }
                     }
                 }
@@ -942,7 +972,7 @@ while ($listener.IsListening) {
                 }
             }
 
-            # ── 7. CATEGORIES API ──
+            # â”€â”€ 7. CATEGORIES API â”€â”€
             elseif ($urlPath -eq "/api/categories") {
                 if ($method -eq "GET") {
                     $categories = Get-DbFile "categories"
@@ -950,7 +980,7 @@ while ($listener.IsListening) {
                 }
             }
 
-            # ── 8. MEDIA UPLOADER ──
+            # â”€â”€ 8. MEDIA UPLOADER â”€â”€
             elseif ($urlPath -eq "/api/media/upload") {
                 if ($method -eq "POST") {
                     if ($null -eq $currentUser -or @("Super Admin", "Admin") -notcontains $currentUser.role) {
@@ -996,7 +1026,7 @@ while ($listener.IsListening) {
                 }
             }
 
-            # ── 10. CREDIT CARDS API ──
+            # â”€â”€ 10. CREDIT CARDS API â”€â”€
             elseif ($urlPath -eq "/api/cards") {
                 if ($method -eq "GET") {
                     $cards = Get-DbFile "cards"
@@ -1006,12 +1036,15 @@ while ($listener.IsListening) {
                     if ($null -eq $currentUser -or @("Super Admin", "Admin") -notcontains $currentUser.role) {
                         Send-JsonResponse $response 403 @{ error = "Forbidden." }
                     } else {
-                        $cards = @(ConvertFrom-Json (Get-DbFile "cards"))
+                        $cards = Get-DbList "cards" "[]"
                         if ($null -eq $cards) { $cards = @() }
                         $newCard = ConvertFrom-Json $body
-                        $newCard.id = "card-" + [Guid]::NewGuid().ToString().Substring(0, 8)
-                        $cards += $newCard
-                        Save-DbFile "cards" (ConvertTo-Json $cards -Depth 5 -Compress)
+                        Add-Member -InputObject $newCard -NotePropertyName "id" -NotePropertyValue ("card-" + [Guid]::NewGuid().ToString().Substring(0, 8)) -Force
+                        $cardSlug = $newCard.name.ToLower().Replace(' ', '-').Replace('?', '').Replace('!', '').Replace('/', '-')
+                        $cardSlug = [Regex]::Replace($cardSlug, '[^a-z0-9\-]', '')
+                        Add-Member -InputObject $newCard -NotePropertyName 'slug' -NotePropertyValue $cardSlug -Force
+                        $cards.Add($newCard) | Out-Null
+                        Save-DbFile "cards" (ConvertTo-JsonArray $cards)
                         Send-JsonResponse $response 200 @{ success = $true; card = $newCard }
                     }
                 }
@@ -1019,15 +1052,20 @@ while ($listener.IsListening) {
                     if ($null -eq $currentUser -or @("Super Admin", "Admin") -notcontains $currentUser.role) {
                         Send-JsonResponse $response 403 @{ error = "Forbidden." }
                     } else {
-                        $cards = @(ConvertFrom-Json (Get-DbFile "cards"))
+                        $cards = Get-DbList "cards" "[]"
                         $updatedCard = ConvertFrom-Json $body
+                        if ($null -eq $updatedCard.slug -or $updatedCard.slug -eq "") {
+                            $cardSlug = $updatedCard.name.ToLower().Replace(" ", "-").Replace("?", "").Replace("!", "").Replace("/", "-")
+                            $cardSlug = [Regex]::Replace($cardSlug, "[^a-z0-9\-]", "")
+                            Add-Member -InputObject $updatedCard -NotePropertyName "slug" -NotePropertyValue $cardSlug -Force
+                        }
                         for ($i = 0; $i -lt $cards.Count; $i++) {
                             if ($cards[$i].id -eq $updatedCard.id) {
                                 $cards[$i] = $updatedCard
                                 break
                             }
                         }
-                        Save-DbFile "cards" (ConvertTo-Json $cards -Depth 5 -Compress)
+                        Save-DbFile "cards" (ConvertTo-JsonArray $cards)
                         Send-JsonResponse $response 200 @{ success = $true; card = $updatedCard }
                     }
                 }
@@ -1036,9 +1074,9 @@ while ($listener.IsListening) {
                         Send-JsonResponse $response 403 @{ error = "Forbidden." }
                     } else {
                         $cardId = $request.QueryString["id"]
-                        $cards = ConvertFrom-Json (Get-DbFile "cards")
+                        $cards = Get-DbList "cards" "[]"
                         $filtered = $cards | Where-Object { $_.id -ne $cardId }
-                        Save-DbFile "cards" (ConvertTo-Json $filtered -Depth 5 -Compress)
+                        Save-DbFile "cards" (ConvertTo-JsonArray $filtered)
                         Send-JsonResponse $response 200 @{ success = $true; message = "Card deleted." }
                     }
                 }
@@ -1055,35 +1093,35 @@ while ($listener.IsListening) {
                         $lines = $csvText -split "\r?\n"
                         if ($lines.Length -gt 1) {
                             $headers = $lines[0] -split ","
-                            $cards = ConvertFrom-Json (Get-DbFile "cards")
+                            $cards = Get-DbList "cards" "[]"
                             if ($null -eq $cards) { $cards = @() }
                             
                             for ($i = 1; $i -lt $lines.Length; $i++) {
                                 if ([string]::IsNullOrWhiteSpace($lines[$i])) { continue }
                                 $values = $lines[$i] -split ","
-                                $card = @{}
+                                $card = [PSCustomObject]@{}
                                 $card.id = "card-" + [Guid]::NewGuid().ToString().Substring(0, 8)
                                 for ($j = 0; $j -lt $headers.Length; $j++) {
                                     if ($j -lt $values.Length) {
                                         $val = $values[$j].Trim().Trim('"').Trim("'")
                                         if ($val -as [double]) {
-                                            $card[$headers[$j].Trim()] = [double]$val
+                                            Add-Member -InputObject $card -NotePropertyName $headers[$j].Trim() -NotePropertyValue [double]$val
                                         } elseif ($val -eq "true") {
-                                            $card[$headers[$j].Trim()] = $true
+                                            Add-Member -InputObject $card -NotePropertyName $headers[$j].Trim() -NotePropertyValue $true
                                         } elseif ($val -eq "false") {
-                                            $card[$headers[$j].Trim()] = $false
+                                            Add-Member -InputObject $card -NotePropertyName $headers[$j].Trim() -NotePropertyValue $false
                                         } else {
-                                            $card[$headers[$j].Trim()] = $val
+                                            Add-Member -InputObject $card -NotePropertyName $headers[$j].Trim() -NotePropertyValue $val
                                         }
                                     }
                                 }
                                 if ($null -eq $card.slug -or $card.slug -eq "") {
-                                    $card.slug = $card.name.ToLower().Replace(" ", "-").Replace("?", "").Replace("!", "").Replace("/", "-")
-                                    $card.slug = [Regex]::Replace($card.slug, "[^a-z0-9\-]", "")
+                                    Add-Member -InputObject $card -NotePropertyName "slug" -NotePropertyValue $card.name.ToLower().Replace(" ", "-").Replace("?", "").Replace("!", "").Replace("/", "-")
+                                    Add-Member -InputObject $card -NotePropertyName "slug" -NotePropertyValue [Regex]::Replace($card.slug, "[^a-z0-9\-]", "")
                                 }
-                                $cards += $card
+                                $cards.Add($card) | Out-Null
                             }
-                            Save-DbFile "cards" (ConvertTo-Json $cards -Depth 5 -Compress)
+                            Save-DbFile "cards" (ConvertTo-JsonArray $cards)
                             Send-JsonResponse $response 200 @{ success = $true; message = "CSV imported successfully." }
                         } else {
                             Send-JsonResponse $response 400 @{ error = "Invalid CSV format." }
@@ -1093,7 +1131,7 @@ while ($listener.IsListening) {
             }
             elseif ($urlPath -eq "/api/cards/export") {
                 if ($method -eq "GET") {
-                    $cards = ConvertFrom-Json (Get-DbFile "cards")
+                    $cards = Get-DbList "cards" "[]"
                     $headers = @("name", "bank", "network", "annualFee", "joiningFee", "apr", "interestFreeDays", "minIncome", "creditScore", "welcomeBonus", "rewardRate", "cashback", "airportLounge", "pros", "cons")
                     $csvLines = @(($headers -join ","))
                     
@@ -1119,16 +1157,16 @@ while ($listener.IsListening) {
                 }
             }
 
-            # ── 9. ADMIN ANALYTICS ──
+            # â”€â”€ 9. ADMIN ANALYTICS â”€â”€
             elseif ($urlPath -eq "/api/admin/analytics") {
                 if ($method -eq "GET") {
                     if ($null -eq $currentUser -or @("Super Admin", "Admin") -notcontains $currentUser.role) {
                         Send-JsonResponse $response 403 @{ error = "Forbidden." }
                     } else {
-                        $posts = ConvertFrom-Json (Get-DbFile "posts")
-                        $users = ConvertFrom-Json (Get-DbFile "users")
-                        $comments = ConvertFrom-Json (Get-DbFile "comments")
-                        $subscribers = ConvertFrom-Json (Get-DbFile "subscribers")
+                        $posts = Get-DbList "posts" "[]"
+                        $users = Get-DbList "users" "[]"
+                        $comments = Get-DbList "comments" "[]"
+                        $subscribers = Get-DbList "subscribers" "[]"
                         
                         $totalViews = 0
                         $totalLikes = 0
@@ -1141,7 +1179,7 @@ while ($listener.IsListening) {
                             totalPosts = $posts.Length
                             publishedPosts = ($posts | Where-Object { $_.status -eq "Published" }).Length
                             draftPosts = ($posts | Where-Object { $_.status -eq "Draft" }).Length
-                            totalUsers = $users.Length
+                            totalUsers = $users.Count
                             totalComments = $comments.Length
                             totalSubscribers = $subscribers.Length
                             totalViews = $totalViews
@@ -1151,7 +1189,7 @@ while ($listener.IsListening) {
                     }
                 }
             }
-            # ── 11. LOANS CONFIG API ──
+            # â”€â”€ 11. LOANS CONFIG API â”€â”€
             elseif ($urlPath -eq "/api/admin/loans") {
                 if ($method -eq "GET") {
                     $loans = Get-DbFile "loans" "{`"home`":8.5,`"personal`":10.5,`"auto`":9.0,`"student`":8.0}"
@@ -1166,7 +1204,7 @@ while ($listener.IsListening) {
                     }
                 }
             }
-            # ── 12. INVESTING CONTENT API ──
+            # â”€â”€ 12. INVESTING CONTENT API â”€â”€
             elseif ($urlPath -eq "/api/admin/investing") {
                 if ($method -eq "GET") {
                     $investData = Get-DbFile "investing" "[]"
@@ -1176,11 +1214,11 @@ while ($listener.IsListening) {
                     if ($null -eq $currentUser -or @("Super Admin", "Admin") -notcontains $currentUser.role) {
                         Send-JsonResponse $response 403 @{ error = "Forbidden." }
                     } else {
-                        $items = ConvertFrom-Json (Get-DbFile "investing" "[]")
+                        $items = Get-DbList "investing" "[]"
                         $item = ConvertFrom-Json $body
                         if ($method -eq "POST") {
-                            $item.id = "inv-" + [Guid]::NewGuid().ToString().Substring(0, 8)
-                            $items += $item
+                            Add-Member -InputObject $item -NotePropertyName "id" -NotePropertyValue ("inv-" + [Guid]::NewGuid().ToString().Substring(0, 8)) -Force
+                            $items.Add($item) | Out-Null
                         } else {
                             for ($idx = 0; $idx -lt $items.Count; $idx++) {
                                 if ($items[$idx].id -eq $item.id) {
@@ -1189,7 +1227,7 @@ while ($listener.IsListening) {
                                 }
                             }
                         }
-                        Save-DbFile "investing" (ConvertTo-Json $items -Depth 5 -Compress)
+                        Save-DbFile "investing" (ConvertTo-JsonArray $items)
                         Send-JsonResponse $response 200 $item
                     }
                 }
@@ -1198,14 +1236,14 @@ while ($listener.IsListening) {
                         Send-JsonResponse $response 403 @{ error = "Forbidden." }
                     } else {
                         $itemId = $request.QueryString["id"]
-                        $items = ConvertFrom-Json (Get-DbFile "investing" "[]")
+                        $items = Get-DbList "investing" "[]"
                         $filtered = $items | Where-Object { $_.id -ne $itemId }
-                        Save-DbFile "investing" (ConvertTo-Json $filtered -Depth 5 -Compress)
+                        Save-DbFile "investing" (ConvertTo-JsonArray $filtered)
                         Send-JsonResponse $response 200 @{ success = $true }
                     }
                 }
             }
-            # ── 13. ADVANCED ANALYTICS DETAILS ──
+            # â”€â”€ 13. ADVANCED ANALYTICS DETAILS â”€â”€
             elseif ($urlPath -eq "/api/admin/analytics/details") {
                 if ($method -eq "GET") {
                     if ($null -eq $currentUser -or @("Super Admin", "Admin") -notcontains $currentUser.role) {
@@ -1242,7 +1280,7 @@ while ($listener.IsListening) {
                     }
                 }
             }
-            # ── 14. USERS DIRECTORY API ──
+            # â”€â”€ 14. USERS DIRECTORY API â”€â”€
             elseif ($urlPath -eq "/api/admin/users") {
                 if ($method -eq "GET") {
                     if ($null -eq $currentUser -or @("Super Admin", "Admin") -notcontains $currentUser.role) {
@@ -1257,19 +1295,19 @@ while ($listener.IsListening) {
                         Send-JsonResponse $response 403 @{ error = "Forbidden." }
                     } else {
                         $updateReq = ConvertFrom-Json $body
-                        $users = ConvertFrom-Json (Get-DbFile "users")
+                        $users = Get-DbList "users" "[]"
                         for ($idx = 0; $idx -lt $users.Count; $idx++) {
                             if ($users[$idx].email -eq $updateReq.email) {
                                 $users[$idx].role = $updateReq.role
                                 break
                             }
                         }
-                        Save-DbFile "users" (ConvertTo-Json $users -Depth 5 -Compress)
+                        Save-DbFile "users" (ConvertTo-JsonArray $users)
                         Send-JsonResponse $response 200 @{ success = $true }
                     }
                 }
             }
-            # ── 15. SEO SETTINGS API ──
+            # â”€â”€ 15. SEO SETTINGS API â”€â”€
             elseif ($urlPath -eq "/api/admin/seo") {
                 if ($method -eq "GET") {
                     $seo = Get-DbFile "seo" "{`"title`":`"WealthEngine - Digital Wealth Engine`",`"desc`":`"Educational investing platform`",`"robots`":`"User-agent: *\nAllow: /`",`"redirects`":[]}"
@@ -1284,19 +1322,19 @@ while ($listener.IsListening) {
                     }
                 }
             }
-            # ── 16. SYSTEM BACKUP ──
+            # â”€â”€ 16. SYSTEM BACKUP â”€â”€
             elseif ($urlPath -eq "/api/admin/backup") {
                 if ($method -eq "GET") {
                     if ($null -eq $currentUser -or @("Super Admin", "Admin") -notcontains $currentUser.role) {
                         Send-JsonResponse $response 403 @{ error = "Forbidden." }
                     } else {
                         $backup = @{
-                            users = ConvertFrom-Json (Get-DbFile "users")
-                            posts = ConvertFrom-Json (Get-DbFile "posts")
-                            comments = ConvertFrom-Json (Get-DbFile "comments")
-                            subscribers = ConvertFrom-Json (Get-DbFile "subscribers")
-                            cards = ConvertFrom-Json (Get-DbFile "cards")
-                            glossary = ConvertFrom-Json (Get-DbFile "glossary")
+                            users = Get-DbList "users" "[]"
+                            posts = Get-DbList "posts" "[]"
+                            comments = Get-DbList "comments" "[]"
+                            subscribers = Get-DbList "subscribers" "[]"
+                            cards = Get-DbList "cards" "[]"
+                            glossary = Get-DbList "glossary" "[]"
                             settings = ConvertFrom-Json (Get-DbFile "settings")
                         }
                         Send-JsonResponse $response 200 $backup
@@ -1350,3 +1388,4 @@ while ($listener.IsListening) {
     
     $response.Close()
 }
+

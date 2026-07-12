@@ -19,18 +19,21 @@
   <!-- Left Sidebar Navigation Panel -->
   <aside class="app-sidebar" id="app-sidebar">
     <div class="sidebar-header">
-      <a href="#home" class="sidebar-logo">⚡ Wealth<span>ENGINE</span></a>
-      <button class="mobile-close-btn" id="mobile-sidebar-close" title="Close menu">✕</button>
+      <a href="#home" class="sidebar-logo">⚡ Wealth<span class="logo-text-span">ENGINE</span></a>
+      <div style="display:flex; gap:0.5rem; align-items:center;">
+        <button id="sidebar-collapse-btn" class="sidebar-collapse-btn" title="Toggle Sidebar Collapse">◀</button>
+        <button class="mobile-close-btn" id="mobile-sidebar-close" title="Close menu">✕</button>
+      </div>
     </div>
     
     <nav class="sidebar-nav">
-      <a href="#home" class="sidebar-link active"><span class="icon">🏠</span> Home</a>
-      <a href="#news" class="sidebar-link"><span class="icon">📰</span> News</a>
-      <a href="#articles" class="sidebar-link"><span class="icon">📝</span> Articles</a>
-      <a href="#calculators" class="sidebar-link"><span class="icon">🧮</span> Calculators</a>
-      <a href="#credit-cards" class="sidebar-link"><span class="icon">💳</span> Credit Cards</a>
-      <a href="#investing" class="sidebar-link"><span class="icon">💹</span> Investing</a>
-      <a href="#about" class="sidebar-link"><span class="icon">ℹ️</span> About</a>
+      <a href="#home" class="sidebar-link active"><span class="icon">🏠</span> <span class="link-text">Home</span></a>
+      <a href="#news" class="sidebar-link"><span class="icon">📰</span> <span class="link-text">News</span></a>
+      <a href="#articles" class="sidebar-link"><span class="icon">📝</span> <span class="link-text">Articles</span></a>
+      <a href="#calculators" class="sidebar-link"><span class="icon">🧮</span> <span class="link-text">Calculators</span></a>
+      <a href="#credit-cards" class="sidebar-link"><span class="icon">💳</span> <span class="link-text">Credit Cards</span></a>
+      <a href="#investing" class="sidebar-link"><span class="icon">💹</span> <span class="link-text">Investing</span></a>
+      <a href="#about" class="sidebar-link"><span class="icon">ℹ️</span> <span class="link-text">About</span></a>
     </nav>
     
     <div class="sidebar-footer">
@@ -395,6 +398,7 @@
         <button class="calc-tab-btn active" data-calc="sip">SIP & Compound</button>
         <button class="calc-tab-btn" data-calc="emi">Mortgage Loan EMI</button>
         <button class="calc-tab-btn" data-calc="payoff">Loan Payoff</button>
+        <button class="calc-tab-btn" data-calc="wedding">💍 Wedding Budget</button>
       </div>
 
       <!-- SIP & Compound Panel -->
@@ -617,7 +621,448 @@
           </table>
         </div>
       </div>
+
+      <!-- Wedding Budget Calculator Panel -->
+      <div id="calc-panel-wedding" class="calc-content-panel">
+        <!-- Breadcrumb Navigation -->
+        <div class="wedding-breadcrumb" style="font-size: 0.8rem; opacity: 0.7; margin-bottom: 1.25rem; display: flex; gap: 0.4rem; align-items: center;">
+          <a href="#home" style="color: var(--color-text); text-decoration: none; font-weight: 500;">Home</a>
+          <span style="opacity: 0.5;">/</span>
+          <a href="#calculators" style="color: var(--color-text); text-decoration: none; font-weight: 500;">Calculators</a>
+          <span style="opacity: 0.5;">/</span>
+          <span style="color: var(--color-accent); font-weight: 700;">Wedding Budget</span>
+        </div>
+
+        <!-- Sub navigation tabs -->
+        <div class="wedding-subtabs">
+          <button class="wedding-subtab-btn active" data-wtab="overview">📊 Overview</button>
+          <button class="wedding-subtab-btn" data-wtab="allocation">📈 Allocation</button>
+          <button class="wedding-subtab-btn" data-wtab="expenses">💸 Expenses</button>
+          <button class="wedding-subtab-btn" data-wtab="vendors">🤝 Vendors</button>
+          <button class="wedding-subtab-btn" data-wtab="checklist">✅ Checklist</button>
+          <button class="wedding-subtab-btn" data-wtab="reports">📋 Export & Save</button>
+        </div>
+
+        <!-- ── TAB 1: OVERVIEW DASHBOARD ── -->
+        <div id="wedding-panel-overview" class="wedding-subpanel active">
+          <div class="calc-grid-layout" style="grid-template-columns: 1.1fr 1.9fr; gap: 1.5rem;">
+            <!-- Settings Form -->
+            <div class="calc-inputs-col checkout-panel" style="padding: 1.25rem;">
+              <h3 style="margin-top:0; margin-bottom:1rem; font-size:1.1rem; color:var(--color-accent);">Wedding Settings</h3>
+              <div class="field-group" style="margin-bottom:0.75rem;">
+                <label>Bride's Name</label>
+                <input type="text" id="wedding-bride-name" value="Jane">
+              </div>
+              <div class="field-group" style="margin-bottom:0.75rem;">
+                <label>Groom's Name</label>
+                <input type="text" id="wedding-groom-name" value="John">
+              </div>
+              <div class="field-group" style="margin-bottom:0.75rem;">
+                <label>Wedding Date</label>
+                <input type="date" id="wedding-date" value="2026-12-31">
+              </div>
+              <div class="field-group" style="margin-bottom:0.75rem;">
+                <label>Wedding Location</label>
+                <input type="text" id="wedding-location" value="Grand Palace Hall">
+              </div>
+              <div class="field-group" style="margin-bottom:0.75rem;">
+                <label>Guest Count</label>
+                <input type="number" id="wedding-guest-count" value="150" min="1">
+              </div>
+              <div class="field-group" style="margin-bottom:0.75rem;">
+                <label>Total Budget</label>
+                <input type="number" id="wedding-total-budget" value="1000000" min="100">
+              </div>
+              <div class="field-group" style="margin-bottom:1rem;">
+                <label>CurrencySymbol</label>
+                <select id="wedding-currency">
+                  <option value="₹">INR (₹)</option>
+                  <option value="$">USD ($)</option>
+                  <option value="€">EUR (€)</option>
+                  <option value="£">GBP (£)</option>
+                </select>
+              </div>
+              <button id="btn-save-wedding-details" class="btn primary w-full">Update Dashboard</button>
+            </div>
+
+            <!-- Stats & Cards Grid -->
+            <div style="display:flex; flex-direction:column; gap:1.5rem;">
+              <!-- 8 Dashboard Summary Cards -->
+              <div class="wedding-stats-grid">
+                <div class="stat-card checkout-panel">
+                  <span class="stat-label">Total Budget</span>
+                  <span class="stat-val" id="w-stat-budget">₹10,00,000</span>
+                </div>
+                <div class="stat-card checkout-panel">
+                  <span class="stat-label">Total Spent</span>
+                  <span class="stat-val" id="w-stat-spent">₹0</span>
+                </div>
+                <div class="stat-card checkout-panel">
+                  <span class="stat-label">Remaining</span>
+                  <span class="stat-val" id="w-stat-remaining" style="color: #10B981;">₹10,00,000</span>
+                </div>
+                <div class="stat-card checkout-panel">
+                  <span class="stat-label">Budget Used</span>
+                  <span class="stat-val" id="w-stat-used-pct">0%</span>
+                </div>
+                <div class="stat-card checkout-panel">
+                  <span class="stat-label">Guests Count</span>
+                  <span class="stat-val" id="w-stat-guests">150</span>
+                </div>
+                <div class="stat-card checkout-panel">
+                  <span class="stat-label">Cost Per Guest</span>
+                  <span class="stat-val" id="w-stat-cost-per-guest">₹0</span>
+                </div>
+                <div class="stat-card checkout-panel">
+                  <span class="stat-label">Pending Payments</span>
+                  <span class="stat-val" id="w-stat-pending">₹0</span>
+                </div>
+                <div class="stat-card checkout-panel">
+                  <span class="stat-label">Days Remaining</span>
+                  <span class="stat-val" id="w-stat-days">0</span>
+                </div>
+              </div>
+
+              <!-- Spending Recommendations Box -->
+              <div id="wedding-recommendations-box" class="checkout-panel" style="padding:1.25rem; border-left:4px solid #3B82F6; background:rgba(59,130,246,0.04);">
+                <h4 style="margin:0 0 0.5rem 0; font-size:0.95rem; color:#2563EB;">💡 Smart Spending Insights</h4>
+                <div id="wedding-recommendations-list" style="font-size:0.8rem; line-height:1.5; opacity:0.85;">
+                  Fill in your details and budget allocations to see smart spending tips.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts and Analytics Container -->
+          <div class="checkout-panel" style="margin-top: 1.5rem; padding: 1.5rem;">
+            <h3 style="margin-top:0; margin-bottom:1.5rem; font-size:1.1rem; color:var(--color-accent);">📊 Charts & Analytics</h3>
+            <div class="wedding-charts-container">
+              <div class="wedding-chart-box">
+                <span class="chart-title">Budget Allocation</span>
+                <canvas id="chart-w-allocation"></canvas>
+              </div>
+              <div class="wedding-chart-box">
+                <span class="chart-title">Budget vs Spent</span>
+                <canvas id="chart-w-spent-bar"></canvas>
+              </div>
+              <div class="wedding-chart-box">
+                <span class="chart-title">Used vs Remaining</span>
+                <canvas id="chart-w-remaining-doughnut"></canvas>
+              </div>
+              <div class="wedding-chart-box">
+                <span class="chart-title">Monthly Expenses</span>
+                <canvas id="chart-w-monthly-line"></canvas>
+              </div>
+              <div class="wedding-chart-box">
+                <span class="chart-title">Payment Status</span>
+                <canvas id="chart-w-payments-pie"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── TAB 2: BUDGET ALLOCATION ── -->
+        <div id="wedding-panel-allocation" class="wedding-subpanel">
+          <div class="checkout-panel" style="padding:1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:1rem;">
+              <div>
+                <h3 style="margin:0; font-size:1.1rem; color:var(--color-accent);">Budget Categories Allocation</h3>
+                <p style="margin:0.25rem 0 0 0; font-size:0.8rem; opacity:0.75;">Distribute your budget among categories. Sum must equal exactly 100%.</p>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:0.75rem; opacity:0.75; text-transform:uppercase;">Total Percentage</div>
+                <div id="allocation-total-pct" style="font-size:1.5rem; font-weight:900; color:var(--color-accent);">100%</div>
+              </div>
+            </div>
+
+            <!-- Allocation Error Banner -->
+            <div id="allocation-warning-banner" class="legal-disclaimer-banner" style="display:none; background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.18); border-radius:8px; padding:0.75rem; margin-bottom:1rem; font-size:0.8rem; color:#EF4444;">
+              <strong>⚠️ Allocation Error:</strong> The total category percentages sum up to <span id="allocation-current-sum">0%</span>. Please adjust allocations so the sum equals exactly 100%.
+            </div>
+
+            <div style="overflow-x:auto;">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th style="width: 100px;">Percentage (%)</th>
+                    <th>Budget Amount</th>
+                    <th>Actual Expense</th>
+                    <th>Remaining</th>
+                    <th style="width: 200px;">Spend Progress</th>
+                  </tr>
+                </thead>
+                <tbody id="wedding-allocation-tbody">
+                  <!-- Dynamic Category Allocation Rows -->
+                </tbody>
+              </table>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:1rem; margin-top:1.5rem;">
+              <button id="btn-reset-allocations" class="btn outline">Reset to Defaults</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── TAB 3: EXPENSE MANAGER ── -->
+        <div id="wedding-panel-expenses" class="wedding-subpanel">
+          <!-- Filters & Add Form wrapper -->
+          <div class="calc-grid-layout" style="grid-template-columns: 1.15fr 1.85fr; gap: 1.5rem;">
+            <!-- Expense Add/Edit Card -->
+            <div class="checkout-panel" style="padding:1.25rem; height: fit-content;">
+              <h3 id="expense-form-title" style="margin-top:0; margin-bottom:1rem; font-size:1.1rem; color:var(--color-accent);">Add New Expense</h3>
+              <input type="hidden" id="w-expense-id">
+              
+              <div class="field-group" style="margin-bottom:0.75rem;">
+                <label>Expense Name</label>
+                <input type="text" id="w-expense-name" placeholder="e.g. Venue Booking Advance" required>
+              </div>
+              <div class="field-group" style="margin-bottom:0.75rem;">
+                <label>Category</label>
+                <select id="w-expense-category">
+                  <!-- 14 Categories options populated dynamically -->
+                </select>
+              </div>
+              <div class="field-group" style="margin-bottom:0.75rem;">
+                <label>Vendor</label>
+                <select id="w-expense-vendor">
+                  <option value="">No Vendor</option>
+                  <!-- Populate dynamically from vendors list -->
+                </select>
+              </div>
+              <div class="field-group" style="margin-bottom:0.75rem;">
+                <label>Amount</label>
+                <input type="number" id="w-expense-amount" placeholder="0" min="0" required>
+              </div>
+              <div class="field-group" style="margin-bottom:0.75rem;">
+                <label>Date</label>
+                <input type="date" id="w-expense-date" required>
+              </div>
+              <div class="field-group" style="margin-bottom:0.75rem;">
+                <label>Payment Status</label>
+                <select id="w-expense-status">
+                  <option value="Paid">Paid</option>
+                  <option value="Pending">Pending</option>
+                </select>
+              </div>
+              <div class="field-group" style="margin-bottom:1rem;">
+                <label>Notes</label>
+                <textarea id="w-expense-notes" style="width:100%; min-height:60px; padding:0.5rem; background:var(--color-bg); border:1px solid var(--color-border); border-radius:8px; color:var(--color-text); font-size:0.85rem;" placeholder="Optional notes..."></textarea>
+              </div>
+
+              <div style="display:flex; gap:0.5rem;">
+                <button id="btn-save-w-expense" class="btn primary" style="flex:1;">Save Expense</button>
+                <button id="btn-cancel-w-expense" class="btn outline" style="display:none;">Cancel</button>
+              </div>
+            </div>
+
+            <!-- Expense List Card -->
+            <div class="checkout-panel" style="padding:1.25rem;">
+              <h3 style="margin-top:0; margin-bottom:1rem; font-size:1.1rem; color:var(--color-accent);">Expenses Directory</h3>
+              
+              <!-- Search, Filter & Sort Controls -->
+              <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.5rem; margin-bottom: 1.25rem;">
+                <input type="text" id="w-expense-search" placeholder="Search name/vendor..." style="padding:0.4rem 0.6rem; font-size:0.8rem; background:var(--color-bg); border:1px solid var(--color-border); border-radius:6px; color:var(--color-text);">
+                <select id="w-expense-filter-cat" style="padding:0.4rem 0.6rem; font-size:0.8rem; background:var(--color-bg); border:1px solid var(--color-border); border-radius:6px; color:var(--color-text);">
+                  <option value="">All Categories</option>
+                </select>
+                <select id="w-expense-filter-status" style="padding:0.4rem 0.6rem; font-size:0.8rem; background:var(--color-bg); border:1px solid var(--color-border); border-radius:6px; color:var(--color-text);">
+                  <option value="">All Statuses</option>
+                  <option value="Paid">Paid</option>
+                  <option value="Pending">Pending</option>
+                </select>
+                <select id="w-expense-sort" style="padding:0.4rem 0.6rem; font-size:0.8rem; background:var(--color-bg); border:1px solid var(--color-border); border-radius:6px; color:var(--color-text);">
+                  <option value="date-desc">Newest First</option>
+                  <option value="date-asc">Oldest First</option>
+                  <option value="amount-desc">Highest Cost</option>
+                  <option value="amount-asc">Lowest Cost</option>
+                  <option value="name-asc">Name A-Z</option>
+                </select>
+              </div>
+
+              <!-- Expenses Directory Table -->
+              <div style="overflow-x:auto; min-height: 250px;">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Expense Name</th>
+                      <th>Category</th>
+                      <th>Vendor</th>
+                      <th>Amount</th>
+                      <th>Date</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="wedding-expenses-tbody">
+                    <!-- Dynamic Expense Rows -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── TAB 4: VENDOR MANAGEMENT ── -->
+        <div id="wedding-panel-vendors" class="wedding-subpanel">
+          <div class="calc-grid-layout" style="grid-template-columns: 1.15fr 1.85fr; gap: 1.5rem;">
+            <!-- Vendor Add/Edit Card -->
+            <div class="checkout-panel" style="padding:1.25rem; height: fit-content;">
+              <h3 id="vendor-form-title" style="margin-top:0; margin-bottom:1rem; font-size:1.1rem; color:var(--color-accent);">Add New Vendor</h3>
+              <input type="hidden" id="w-vendor-id">
+
+              <div class="field-group" style="margin-bottom:0.75rem;">
+                <label>Vendor Name</label>
+                <input type="text" id="w-vendor-name" placeholder="e.g. Royal Palace Caterers" required>
+              </div>
+              <div class="field-group" style="margin-bottom:0.75rem;">
+                <label>Category</label>
+                <select id="w-vendor-category">
+                  <!-- Populate dynamically with 14 categories -->
+                </select>
+              </div>
+              <div class="field-group" style="margin-bottom:0.75rem;">
+                <label>Contact Number</label>
+                <input type="text" id="w-vendor-phone" placeholder="e.g. +91 98765 43210">
+              </div>
+              <div class="field-group" style="margin-bottom:0.75rem;">
+                <label>Email Address</label>
+                <input type="email" id="w-vendor-email" placeholder="e.g. contact@vendor.com">
+              </div>
+              <div class="field-group" style="margin-bottom:0.75rem;">
+                <label>Website URL</label>
+                <input type="url" id="w-vendor-website" placeholder="e.g. https://vendor.com">
+              </div>
+              <div class="field-group" style="margin-bottom:0.75rem;">
+                <label>Quoted Price</label>
+                <input type="number" id="w-vendor-quote" placeholder="0" min="0">
+              </div>
+              <div class="field-group" style="margin-bottom:0.75rem;">
+                <label>Final Agreed Price</label>
+                <input type="number" id="w-vendor-final" placeholder="0" min="0">
+              </div>
+              <div class="field-group" style="margin-bottom:0.75rem;">
+                <label>Advance Paid</label>
+                <input type="number" id="w-vendor-advance" placeholder="0" min="0">
+              </div>
+              <div class="field-group" style="margin-bottom:0.75rem;">
+                <label>Status</label>
+                <select id="w-vendor-status">
+                  <option value="Contacted">Contacted</option>
+                  <option value="Booked">Booked</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </div>
+              <div class="field-group" style="margin-bottom:1rem;">
+                <label>Rating (1-5 Stars)</label>
+                <div class="star-rating-selector" id="w-vendor-rating-stars">
+                  <span class="star-btn" data-val="1">★</span>
+                  <span class="star-btn" data-val="2">★</span>
+                  <span class="star-btn" data-val="3">★</span>
+                  <span class="star-btn" data-val="4">★</span>
+                  <span class="star-btn" data-val="5">★</span>
+                </div>
+                <input type="hidden" id="w-vendor-rating" value="5">
+              </div>
+
+              <div style="display:flex; gap:0.5rem;">
+                <button id="btn-save-w-vendor" class="btn primary" style="flex:1;">Save Vendor</button>
+                <button id="btn-cancel-w-vendor" class="btn outline" style="display:none;">Cancel</button>
+              </div>
+            </div>
+
+            <!-- Vendors List Card -->
+            <div class="checkout-panel" style="padding:1.25rem;">
+              <h3 style="margin-top:0; margin-bottom:1rem; font-size:1.1rem; color:var(--color-accent);">Vendors Portfolio</h3>
+              <div style="overflow-x:auto; min-height: 300px;">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Vendor Name</th>
+                      <th>Category</th>
+                      <th>Contact Info</th>
+                      <th>Agreed Price</th>
+                      <th>Paid / Bal</th>
+                      <th>Status</th>
+                      <th>Rating</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="wedding-vendors-tbody">
+                    <!-- Dynamic Vendor Rows -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── TAB 5: WEDDING CHECKLIST ── -->
+        <div id="wedding-panel-checklist" class="wedding-subpanel">
+          <div class="checkout-panel" style="padding:1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem;">
+              <div>
+                <h3 style="margin:0; font-size:1.1rem; color:var(--color-accent);">Wedding Milestones Checklist</h3>
+                <p style="margin:0.25rem 0 0 0; font-size:0.8rem; opacity:0.75;">Cross off items as you complete vendor booking and setups.</p>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:0.75rem; opacity:0.75; text-transform:uppercase;">Checklist Progress</div>
+                <div id="checklist-progress-text" style="font-size:1.5rem; font-weight:900; color:var(--color-accent);">0%</div>
+              </div>
+            </div>
+
+            <!-- Checklist Progress Bar -->
+            <div style="background:var(--color-border); height:12px; border-radius:6px; overflow:hidden; margin-bottom:2rem;">
+              <div id="checklist-progress-bar" style="background:#10B981; width:0%; height:100%; transition: width 0.3s ease;"></div>
+            </div>
+
+            <!-- Checklist Items Grid -->
+            <div class="wedding-checklist-grid" id="wedding-checklist-container">
+              <!-- Dynamically rendered Checklist items with checkboxes and badges -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ── TAB 6: REPORTS & EXPORTS ── -->
+        <div id="wedding-panel-reports" class="wedding-subpanel">
+          <div class="checkout-panel" style="padding:2rem; text-align:center;">
+            <h3 style="margin-top:0; font-size:1.25rem; color:var(--color-accent);">📋 Wedding Budget Planner Exports</h3>
+            <p style="margin-bottom:2rem; opacity:0.8; max-width:600px; margin-left:auto; margin-right:auto;">
+              Download your budget sheets, vendor invoices summary, checklists, and expenses ledger in industry-standard formats, or save your entire setup to load again later.
+            </p>
+
+            <div class="wedding-exports-grid">
+              <button id="btn-w-pdf" class="btn primary" style="padding:1rem; font-size:0.95rem; border-radius:12px;">
+                <span style="font-size:1.8rem; display:block; margin-bottom:0.5rem;">📄</span>
+                Export PDF Summary
+              </button>
+              <button id="btn-w-excel" class="btn primary" style="padding:1rem; font-size:0.95rem; border-radius:12px; background:#107C41;">
+                <span style="font-size:1.8rem; display:block; margin-bottom:0.5rem;">📊</span>
+                Export Excel Spreadsheet
+              </button>
+              <button id="btn-w-csv" class="btn primary" style="padding:1rem; font-size:0.95rem; border-radius:12px; background:#0078D4;">
+                <span style="font-size:1.8rem; display:block; margin-bottom:0.5rem;">📁</span>
+                Export Expenses CSV
+              </button>
+              <button id="btn-w-print" class="btn primary" style="padding:1rem; font-size:0.95rem; border-radius:12px; background:#4B5563;">
+                <span style="font-size:1.8rem; display:block; margin-bottom:0.5rem;">🖨️</span>
+                Print Budget Sheet
+              </button>
+              <button id="btn-w-save-json" class="btn primary" style="padding:1rem; font-size:0.95rem; border-radius:12px; background:#D97706;">
+                <span style="font-size:1.8rem; display:block; margin-bottom:0.5rem;">💾</span>
+                Backup JSON File
+              </button>
+              <div class="checkout-panel" style="display:flex; flex-direction:column; justify-content:center; align-items:center; padding:1rem; border-style:dashed; border-color:var(--color-border); border-width:2px;">
+                <span style="font-size:1.8rem; display:block; margin-bottom:0.25rem;">📂</span>
+                <span style="font-size:0.8rem; opacity:0.75; font-weight:600; margin-bottom:0.5rem;">Restore from Backup</span>
+                <input type="file" id="btn-w-load-json" accept=".json" style="font-size:0.75rem; width:100%; max-width:180px;">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
+
 
     <!-- ── 4. CREDIT CARDS VIEW ────────────────── -->
     <section id="view-credit-cards" class="app-view">
@@ -2128,7 +2573,7 @@
     </div>
   </div>
 
-  <script src="src/js/main.js"></script>
+  <script src="src/js/main.js?v=3"></script>
 </body>
 </html>
 

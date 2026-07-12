@@ -485,7 +485,12 @@
     
     // Update nav links active class
     document.querySelectorAll('#main-nav-links a, .sidebar-link').forEach(a => {
-      a.classList.toggle('active', a.getAttribute('href') === parts[0]);
+      const href = a.getAttribute('href');
+      if (href === '#calculators') {
+        a.classList.toggle('active', hash === '#calculators' || hash === '#calculators/wedding');
+      } else {
+        a.classList.toggle('active', href === parts[0]);
+      }
     });
 
     state.activeView = viewName;
@@ -514,7 +519,7 @@
         }
       } 
       else if (viewName === 'calculators') {
-        await renderCalculators();
+        await renderCalculators(parts[1]);
       } 
       else if (viewName === 'credit-cards') {
         await renderCreditCards();
@@ -985,7 +990,7 @@
   }
 
   // ── 4. Calculators View ──────────────────────
-  async function renderCalculators() {
+  async function renderCalculators(tabName = null) {
     const view = el('view-calculators');
     view.classList.add('active');
 
@@ -1011,6 +1016,16 @@
     el('btn-run-payoff').onclick = runLoanPayoffCalculator;
     el('btn-payoff-print').onclick = printPayoffSchedule;
     el('btn-payoff-save').onclick = savePayoffCalculation;
+
+    // Initialize Wedding Budget Calculator
+    initWeddingBudget();
+
+    if (tabName) {
+      const tabBtn = document.querySelector(`.calc-tab-btn[data-calc="${tabName}"]`);
+      if (tabBtn) {
+        tabBtn.click();
+      }
+    }
   }
 
   function runSipCompounding() {
@@ -1264,6 +1279,953 @@
       showToast('Failed to save calculation.', 'error');
     }
   }
+
+  // ── Wedding Budget Calculator Module ─────────
+  let weddingCharts = {};
+  let weddingInitialized = false;
+
+  const defaultAllocations = {
+    'Venue': 20,
+    'Catering': 25,
+    'Decoration': 10,
+    'Photography': 8,
+    'Videography': 7,
+    'Clothing': 10,
+    'Jewelry': 5,
+    'Makeup': 3,
+    'Entertainment': 4,
+    'Invitations': 2,
+    'Transportation': 2,
+    'Accommodation': 2,
+    'Gifts': 1,
+    'Miscellaneous': 1
+  };
+
+  const defaultChecklist = [
+    { task: 'Book Wedding Venue', category: 'Venue', checked: false },
+    { task: 'Select Catering Menu', category: 'Catering', checked: false },
+    { task: 'Hire Photographer & Videographer', category: 'Photography', checked: false },
+    { task: 'Finalize Decoration Theme', category: 'Decoration', checked: false },
+    { task: 'Print & Send Invitations', category: 'Invitations', checked: false },
+    { task: 'Buy Bridal Dress', category: 'Clothing', checked: false },
+    { task: 'Buy Groom Suit', category: 'Clothing', checked: false },
+    { task: 'Book Makeup Artist', category: 'Makeup', checked: false },
+    { task: 'Organize Reception Details', category: 'Venue', checked: false },
+    { task: 'Plan & Book Honeymoon', category: 'Miscellaneous', checked: false },
+    { task: 'Arrange Transportation', category: 'Transportation', checked: false },
+    { task: 'Book Accommodation for Guests', category: 'Accommodation', checked: false }
+  ];
+
+  function getWeddingData() {
+    const data = localStorage.getItem('wealthengine_wedding_data');
+    if (data) {
+      try {
+        const parsed = JSON.parse(data);
+        if (!parsed.checklist || parsed.checklist.length === 0) {
+          parsed.checklist = JSON.parse(JSON.stringify(defaultChecklist));
+        }
+        if (!parsed.allocations) {
+          parsed.allocations = JSON.parse(JSON.stringify(defaultAllocations));
+        }
+        if (!parsed.expenses) parsed.expenses = [];
+        if (!parsed.vendors) parsed.vendors = [];
+        if (!parsed.settings) {
+          parsed.settings = {
+            brideName: 'Jane',
+            groomName: 'John',
+            weddingDate: '2026-12-31',
+            location: 'Grand Palace Hall',
+            guestCount: 150,
+            totalBudget: 1000000,
+            currency: '₹'
+          };
+        }
+        return parsed;
+      } catch (e) {
+        // Fallback
+      }
+    }
+    return {
+      settings: {
+        brideName: 'Jane',
+        groomName: 'John',
+        weddingDate: '2026-12-31',
+        location: 'Grand Palace Hall',
+        guestCount: 150,
+        totalBudget: 1000000,
+        currency: '₹'
+      },
+      allocations: JSON.parse(JSON.stringify(defaultAllocations)),
+      expenses: [],
+      vendors: [],
+      checklist: JSON.parse(JSON.stringify(defaultChecklist))
+    };
+  }
+
+  function saveWeddingData(data) {
+    localStorage.setItem('wealthengine_wedding_data', JSON.stringify(data));
+  }
+
+  function initWeddingBudget() {
+    if (weddingInitialized) {
+      runWeddingBudgetCalculations();
+      return;
+    }
+    weddingInitialized = true;
+
+    // Sub-tab toggling
+    document.querySelectorAll('.wedding-subtab-btn').forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll('.wedding-subtab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        document.querySelectorAll('.wedding-subpanel').forEach(p => p.classList.remove('active'));
+        el(`wedding-panel-${btn.dataset.wtab}`).classList.add('active');
+        
+        if (btn.dataset.wtab === 'overview') {
+          setTimeout(updateWeddingCharts, 50);
+        }
+      };
+    });
+
+    // Populate Category dropdowns
+    const categories = Object.keys(defaultAllocations);
+    const catSelects = ['w-expense-category', 'w-expense-filter-cat', 'w-vendor-category'];
+    catSelects.forEach(id => {
+      const select = el(id);
+      if (select) {
+        const firstOpt = select.options.length > 0 ? select.options[0].outerHTML : '';
+        select.innerHTML = firstOpt + categories.map(c => `<option value="${c}">${c}</option>`).join('');
+      }
+    });
+
+    // Load initial settings
+    const data = getWeddingData();
+    el('wedding-bride-name').value = data.settings.brideName || 'Jane';
+    el('wedding-groom-name').value = data.settings.groomName || 'John';
+    el('wedding-date').value = data.settings.weddingDate || '2026-12-31';
+    el('wedding-location').value = data.settings.location || 'Grand Palace Hall';
+    el('wedding-guest-count').value = data.settings.guestCount || 150;
+    el('wedding-total-budget').value = data.settings.totalBudget || 1000000;
+    el('wedding-currency').value = data.settings.currency || '₹';
+
+    // Save Wedding Settings button handler
+    el('btn-save-wedding-details').onclick = () => {
+      const updatedData = getWeddingData();
+      updatedData.settings.brideName = el('wedding-bride-name').value.trim();
+      updatedData.settings.groomName = el('wedding-groom-name').value.trim();
+      updatedData.settings.weddingDate = el('wedding-date').value;
+      updatedData.settings.location = el('wedding-location').value.trim();
+      updatedData.settings.guestCount = parseInt(el('wedding-guest-count').value) || 0;
+      updatedData.settings.totalBudget = parseFloat(el('wedding-total-budget').value) || 0;
+      updatedData.settings.currency = el('wedding-currency').value;
+      
+      saveWeddingData(updatedData);
+      showToast('Wedding settings updated successfully!');
+      runWeddingBudgetCalculations();
+    };
+
+    // Reset allocations
+    el('btn-reset-allocations').onclick = () => {
+      const updatedData = getWeddingData();
+      updatedData.allocations = JSON.parse(JSON.stringify(defaultAllocations));
+      saveWeddingData(updatedData);
+      showToast('Allocations reset to default percentages!');
+      runWeddingBudgetCalculations();
+    };
+
+    // Vendor Star Rating Selector
+    document.querySelectorAll('#w-vendor-rating-stars .star-btn').forEach(star => {
+      star.onclick = () => {
+        const rating = parseInt(star.dataset.val);
+        el('w-vendor-rating').value = rating;
+        document.querySelectorAll('#w-vendor-rating-stars .star-btn').forEach(s => {
+          s.classList.toggle('active', parseInt(s.dataset.val) <= rating);
+        });
+      };
+    });
+
+    // Forms actions
+    el('btn-save-w-expense').onclick = saveWeddingExpense;
+    el('btn-cancel-w-expense').onclick = resetExpenseForm;
+    el('btn-save-w-vendor').onclick = saveWeddingVendor;
+    el('btn-cancel-w-vendor').onclick = resetVendorForm;
+
+    // Filters
+    el('w-expense-search').oninput = renderExpensesTable;
+    el('w-expense-filter-cat').onchange = renderExpensesTable;
+    el('w-expense-filter-status').onchange = renderExpensesTable;
+    el('w-expense-sort').onchange = renderExpensesTable;
+
+    // Reports
+    el('btn-w-pdf').onclick = exportWeddingPDF;
+    el('btn-w-excel').onclick = exportWeddingExcel;
+    el('btn-w-csv').onclick = exportWeddingCSV;
+    el('btn-w-save-json').onclick = backupWeddingJSON;
+    el('btn-w-load-json').onchange = loadWeddingJSON;
+
+    runWeddingBudgetCalculations();
+  }
+
+  function runWeddingBudgetCalculations() {
+    const data = getWeddingData();
+    const cur = data.settings.currency;
+    const budget = data.settings.totalBudget;
+
+    const totalSpent = data.expenses.reduce((sum, exp) => sum + (parseFloat(exp.amount) || 0), 0);
+    const remaining = budget - totalSpent;
+    const usedPct = budget > 0 ? Math.round((totalSpent / budget) * 100) : 0;
+    const guests = data.settings.guestCount || 0;
+    const costPerGuest = guests > 0 ? totalSpent / guests : 0;
+    const pendingPayments = data.expenses.filter(e => e.status === 'Pending').reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+    
+    const weddingDate = new Date(data.settings.weddingDate);
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const diffTime = weddingDate - today;
+    const daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+
+    el('w-stat-budget').textContent = cur + budget.toLocaleString();
+    el('w-stat-spent').textContent = cur + totalSpent.toLocaleString();
+    el('w-stat-remaining').textContent = cur + remaining.toLocaleString();
+    el('w-stat-remaining').style.color = remaining >= 0 ? '#10B981' : '#EF4444';
+    el('w-stat-used-pct').textContent = usedPct + '%';
+    el('w-stat-guests').textContent = guests.toString();
+    el('w-stat-cost-per-guest').textContent = cur + Math.round(costPerGuest).toLocaleString();
+    el('w-stat-pending').textContent = cur + pendingPayments.toLocaleString();
+    el('w-stat-days').textContent = daysRemaining.toString();
+
+    let totalPct = 0;
+    const categories = Object.keys(defaultAllocations);
+    categories.forEach(cat => {
+      totalPct += parseFloat(data.allocations[cat]) || 0;
+    });
+
+    const sumElement = el('allocation-current-sum');
+    const warningBanner = el('allocation-warning-banner');
+    const totalPctEl = el('allocation-total-pct');
+    if (sumElement && warningBanner && totalPctEl) {
+      sumElement.textContent = totalPct + '%';
+      totalPctEl.textContent = totalPct + '%';
+      if (totalPct !== 100) {
+        warningBanner.style.display = 'block';
+        totalPctEl.style.color = '#EF4444';
+      } else {
+        warningBanner.style.display = 'none';
+        totalPctEl.style.color = '#0078D4';
+      }
+    }
+
+    updateSpendingRecommendations(budget, totalSpent, remaining, costPerGuest, daysRemaining, data.expenses);
+    renderAllocationTable(data, cur, budget);
+    renderExpensesTable();
+    renderVendorsTable();
+    renderChecklistTable();
+    updateWeddingCharts();
+  }
+
+  function updateSpendingRecommendations(budget, spent, remaining, costPerGuest, daysRemaining, expenses) {
+    const listEl = el('wedding-recommendations-list');
+    if (!listEl) return;
+
+    let tips = [];
+
+    if (remaining < 0) {
+      tips.push(`<li style="color:#EF4444; font-weight:700;">🚨 BUDGET OVERSPENT! You have exceeded your total wedding budget by ${Math.abs(remaining).toLocaleString()}. Review your category allocations and reduce guest counts or select lower-priced vendors.</li>`);
+    } else if (remaining < budget * 0.1) {
+      tips.push(`<li style="color:#D97706; font-weight:600;">⚠️ Tight Budget: Less than 10% of your total budget remains. Limit any additional impulse purchases.</li>`);
+    } else {
+      tips.push(`<li>✨ Healthy Budget: You have ${remaining.toLocaleString()} remaining. You are currently on track!</li>`);
+    }
+
+    if (costPerGuest > 5000) {
+      tips.push(`<li>👥 High Cost Per Guest: Your average spent per guest is high (${Math.round(costPerGuest).toLocaleString()}). Consider optimizing your catering options or simplifying dinner layouts to cut costs.</li>`);
+    }
+
+    if (daysRemaining === 0) {
+      tips.push(`<li>🎉 Congratulations! Today is the wedding day!</li>`);
+    } else if (daysRemaining < 30) {
+      tips.push(`<li style="color:#D97706;">⌛ 1-Month Milestone: Only ${daysRemaining} days remaining! Make sure all final vendor payments are completed and details confirmed.</li>`);
+    } else if (daysRemaining < 90) {
+      tips.push(`<li>📅 3-Month Milestone: ${daysRemaining} days remaining. Send out all invitations and confirm outfit trials.</li>`);
+    } else {
+      tips.push(`<li>📆 Timeline: You have ${daysRemaining} days until the big day. Focus on booking venue and catering first.</li>`);
+    }
+
+    const data = getWeddingData();
+    const categories = Object.keys(defaultAllocations);
+    categories.forEach(cat => {
+      const catBudget = budget * (parseFloat(data.allocations[cat]) || 0) / 100;
+      const catSpent = expenses.filter(e => e.category === cat).reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+      if (catSpent > catBudget) {
+        tips.push(`<li style="color:#EF4444;">⚠️ Overspending in <strong>${cat}</strong>: Spent ${catSpent.toLocaleString()} against budget of ${catBudget.toLocaleString()}. Try finding discounts or reducing specifications in this category.</li>`);
+      }
+    });
+
+    listEl.innerHTML = `<ul style="margin:0; padding-left:1.2rem; display:flex; flex-direction:column; gap:0.35rem;">${tips.join('')}</ul>`;
+  }
+
+  function renderAllocationTable(data, cur, budget) {
+    const tbody = el('wedding-allocation-tbody');
+    if (!tbody) return;
+
+    const categories = Object.keys(defaultAllocations);
+    tbody.innerHTML = categories.map(cat => {
+      const pct = parseFloat(data.allocations[cat]) || 0;
+      const catBudget = budget * pct / 100;
+      
+      const actual = data.expenses.filter(e => e.category === cat).reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+      const remaining = catBudget - actual;
+      const spendPct = catBudget > 0 ? Math.min(100, Math.round((actual / catBudget) * 100)) : 0;
+      const barColor = actual > catBudget ? '#EF4444' : '#10B981';
+
+      return `
+        <tr>
+          <td><strong>${cat}</strong></td>
+          <td>
+            <input type="number" class="w-alloc-pct-input" data-cat="${cat}" value="${pct}" min="0" max="100" style="width:70px; padding:0.25rem 0.5rem; background:var(--color-bg); border:1px solid var(--color-border); border-radius:6px; color:var(--color-text);">
+          </td>
+          <td>${cur}${Math.round(catBudget).toLocaleString()}</td>
+          <td>${cur}${actual.toLocaleString()}</td>
+          <td style="color:${remaining >= 0 ? '#10B981' : '#EF4444'}; font-weight:600;">
+            ${remaining >= 0 ? cur + Math.round(remaining).toLocaleString() : '-' + cur + Math.round(Math.abs(remaining)).toLocaleString()}
+          </td>
+          <td>
+            <div style="font-size:0.75rem; text-align:right; font-weight:700; color:${barColor};">${spendPct}%</div>
+            <div class="alloc-progress-container">
+              <div class="alloc-progress-bar" style="width:${spendPct}%; background:${barColor};"></div>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    document.querySelectorAll('.w-alloc-pct-input').forEach(input => {
+      const updateAlloc = () => {
+        const cat = input.dataset.cat;
+        const val = parseFloat(input.value) || 0;
+        const updatedData = getWeddingData();
+        updatedData.allocations[cat] = val;
+        saveWeddingData(updatedData);
+        
+        let sumPct = 0;
+        Object.keys(defaultAllocations).forEach(c => {
+          sumPct += parseFloat(updatedData.allocations[c]) || 0;
+        });
+        
+        const sumElement = el('allocation-current-sum');
+        const warningBanner = el('allocation-warning-banner');
+        const totalPctEl = el('allocation-total-pct');
+        if (sumElement && warningBanner && totalPctEl) {
+          sumElement.textContent = sumPct + '%';
+          totalPctEl.textContent = sumPct + '%';
+          if (sumPct !== 100) {
+            warningBanner.style.display = 'block';
+            totalPctEl.style.color = '#EF4444';
+          } else {
+            warningBanner.style.display = 'none';
+            totalPctEl.style.color = '#0078D4';
+          }
+        }
+      };
+      
+      input.onchange = () => {
+        updateAlloc();
+        runWeddingBudgetCalculations();
+      };
+      input.onkeyup = updateAlloc;
+    });
+  }
+
+  function saveWeddingExpense() {
+    const id = el('w-expense-id').value;
+    const name = el('w-expense-name').value.trim();
+    const category = el('w-expense-category').value;
+    const vendorId = el('w-expense-vendor').value;
+    const amount = parseFloat(el('w-expense-amount').value) || 0;
+    const date = el('w-expense-date').value;
+    const status = el('w-expense-status').value;
+    const notes = el('w-expense-notes').value.trim();
+
+    if (!name || !date || amount <= 0) {
+      showToast('Please fill in Name, Date, and Amount.', 'error');
+      return;
+    }
+
+    const data = getWeddingData();
+    let vendorName = '';
+    if (vendorId) {
+      const v = data.vendors.find(vd => vd.id === vendorId);
+      if (v) vendorName = v.name;
+    }
+
+    if (id) {
+      const expIdx = data.expenses.findIndex(e => e.id === id);
+      if (expIdx !== -1) {
+        data.expenses[expIdx] = { id, name, category, vendorId, vendorName, amount, date, status, notes };
+        showToast('Expense updated.');
+      }
+    } else {
+      const newExp = {
+        id: 'exp-' + Math.random().toString(36).substring(2, 10),
+        name, category, vendorId, vendorName, amount, date, status, notes
+      };
+      data.expenses.push(newExp);
+      showToast('Expense added.');
+    }
+
+    saveWeddingData(data);
+    resetExpenseForm();
+    runWeddingBudgetCalculations();
+  }
+
+  function resetExpenseForm() {
+    el('w-expense-id').value = '';
+    el('w-expense-name').value = '';
+    el('w-expense-amount').value = '';
+    el('w-expense-date').value = '';
+    el('w-expense-status').value = 'Paid';
+    el('w-expense-notes').value = '';
+    el('w-expense-vendor').value = '';
+    el('expense-form-title').textContent = 'Add New Expense';
+    el('btn-cancel-w-expense').style.display = 'none';
+  }
+
+  function editWeddingExpense(id) {
+    const data = getWeddingData();
+    const exp = data.expenses.find(e => e.id === id);
+    if (!exp) return;
+
+    el('w-expense-id').value = exp.id;
+    el('w-expense-name').value = exp.name;
+    el('w-expense-category').value = exp.category;
+    el('w-expense-vendor').value = exp.vendorId || '';
+    el('w-expense-amount').value = exp.amount;
+    el('w-expense-date').value = exp.date;
+    el('w-expense-status').value = exp.status;
+    el('w-expense-notes').value = exp.notes || '';
+
+    el('expense-form-title').textContent = 'Edit Expense';
+    el('btn-cancel-w-expense').style.display = 'block';
+    
+    el('expense-form-title').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function deleteWeddingExpense(id) {
+    if (!confirm('Are you sure you want to delete this expense?')) return;
+    const data = getWeddingData();
+    data.expenses = data.expenses.filter(e => e.id !== id);
+    saveWeddingData(data);
+    showToast('Expense deleted.');
+    runWeddingBudgetCalculations();
+  }
+
+  function renderExpensesTable() {
+    const tbody = el('wedding-expenses-tbody');
+    if (!tbody) return;
+
+    const data = getWeddingData();
+    const cur = data.settings.currency;
+
+    const expVendorSelect = el('w-expense-vendor');
+    if (expVendorSelect) {
+      const selectedVal = expVendorSelect.value;
+      expVendorSelect.innerHTML = '<option value="">No Vendor</option>' + data.vendors.map(v => `<option value="${v.id}">${v.name}</option>`).join('');
+      expVendorSelect.value = selectedVal;
+    }
+
+    const search = el('w-expense-search').value.toLowerCase();
+    const filterCat = el('w-expense-filter-cat').value;
+    const filterStatus = el('w-expense-filter-status').value;
+    const sortBy = el('w-expense-sort').value;
+
+    let filtered = [...data.expenses];
+
+    if (search) {
+      filtered = filtered.filter(e => e.name.toLowerCase().includes(search) || (e.vendorName && e.vendorName.toLowerCase().includes(search)));
+    }
+    if (filterCat) {
+      filtered = filtered.filter(e => e.category === filterCat);
+    }
+    if (filterStatus) {
+      filtered = filtered.filter(e => e.status === filterStatus);
+    }
+    filtered.sort((a, b) => {
+      if (sortBy === 'date-desc') return new Date(b.date) - new Date(a.date);
+      if (sortBy === 'date-asc') return new Date(a.date) - new Date(b.date);
+      if (sortBy === 'amount-desc') return b.amount - a.amount;
+      if (sortBy === 'amount-asc') return a.amount - b.amount;
+      if (sortBy === 'name-asc') return a.name.localeCompare(b.name);
+      return 0;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; opacity:0.5;">No expenses found.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(exp => `
+      <tr>
+        <td><strong>${exp.name}</strong></td>
+        <td><span class="checklist-badge completed" style="background:rgba(0,120,212,0.06); color:var(--color-accent);">${exp.category}</span></td>
+        <td>${exp.vendorName ? exp.vendorName : '<span style="opacity:0.4;">—</span>'}</td>
+        <td>${cur}${exp.amount.toLocaleString()}</td>
+        <td style="font-size:0.8rem;">${exp.date}</td>
+        <td>
+          <span class="checklist-badge ${exp.status === 'Paid' ? 'completed' : 'pending'}">${exp.status}</span>
+        </td>
+        <td>
+          <div style="display:flex; gap:0.35rem;">
+            <button class="btn outline" onclick="editWeddingExpense('${exp.id}')" style="padding:0.25rem 0.5rem; font-size:0.75rem;">Edit</button>
+            <button class="btn outline" onclick="deleteWeddingExpense('${exp.id}')" style="padding:0.25rem 0.5rem; font-size:0.75rem; border-color:#EF4444; color:#EF4444;">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function saveWeddingVendor() {
+    const id = el('w-vendor-id').value;
+    const name = el('w-vendor-name').value.trim();
+    const category = el('w-vendor-category').value;
+    const phone = el('w-vendor-phone').value.trim();
+    const email = el('w-vendor-email').value.trim();
+    const website = el('w-vendor-website').value.trim();
+    const quote = parseFloat(el('w-vendor-quote').value) || 0;
+    const final = parseFloat(el('w-vendor-final').value) || 0;
+    const advance = parseFloat(el('w-vendor-advance').value) || 0;
+    const status = el('w-vendor-status').value;
+    const rating = parseInt(el('w-vendor-rating').value) || 5;
+
+    if (!name) {
+      showToast('Please specify Vendor Name.', 'error');
+      return;
+    }
+
+    const data = getWeddingData();
+    const balance = final - advance;
+
+    if (id) {
+      const vIdx = data.vendors.findIndex(v => v.id === id);
+      if (vIdx !== -1) {
+        data.vendors[vIdx] = { id, name, category, phone, email, website, quote, final, advance, balance, status, rating };
+        showToast('Vendor updated.');
+      }
+    } else {
+      const newVendor = {
+        id: 'vendor-' + Math.random().toString(36).substring(2, 10),
+        name, category, phone, email, website, quote, final, advance, balance, status, rating
+      };
+      data.vendors.push(newVendor);
+      showToast('Vendor added.');
+    }
+
+    saveWeddingData(data);
+    resetVendorForm();
+    runWeddingBudgetCalculations();
+  }
+
+  function resetVendorForm() {
+    el('w-vendor-id').value = '';
+    el('w-vendor-name').value = '';
+    el('w-vendor-phone').value = '';
+    el('w-vendor-email').value = '';
+    el('w-vendor-website').value = '';
+    el('w-vendor-quote').value = '';
+    el('w-vendor-final').value = '';
+    el('w-vendor-advance').value = '';
+    el('w-vendor-status').value = 'Contacted';
+    el('w-vendor-rating').value = '5';
+    el('vendor-form-title').textContent = 'Add New Vendor';
+    el('btn-cancel-w-vendor').style.display = 'none';
+
+    document.querySelectorAll('#w-vendor-rating-stars .star-btn').forEach(s => s.classList.add('active'));
+  }
+
+  function editWeddingVendor(id) {
+    const data = getWeddingData();
+    const v = data.vendors.find(vd => vd.id === id);
+    if (!v) return;
+
+    el('w-vendor-id').value = v.id;
+    el('w-vendor-name').value = v.name;
+    el('w-vendor-category').value = v.category;
+    el('w-vendor-phone').value = v.phone || '';
+    el('w-vendor-email').value = v.email || '';
+    el('w-vendor-website').value = v.website || '';
+    el('w-vendor-quote').value = v.quote || '';
+    el('w-vendor-final').value = v.final || '';
+    el('w-vendor-advance').value = v.advance || '';
+    el('w-vendor-status').value = v.status;
+    el('w-vendor-rating').value = v.rating;
+
+    document.querySelectorAll('#w-vendor-rating-stars .star-btn').forEach(s => {
+      s.classList.toggle('active', parseInt(s.dataset.val) <= v.rating);
+    });
+
+    el('vendor-form-title').textContent = 'Edit Vendor';
+    el('btn-cancel-w-vendor').style.display = 'block';
+    
+    el('vendor-form-title').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function deleteWeddingVendor(id) {
+    if (!confirm('Are you sure you want to delete this vendor? This will also unbind it from expenses.')) return;
+    const data = getWeddingData();
+    data.vendors = data.vendors.filter(v => v.id !== id);
+    data.expenses.forEach(e => {
+      if (e.vendorId === id) {
+        e.vendorId = '';
+        e.vendorName = '';
+      }
+    });
+    saveWeddingData(data);
+    showToast('Vendor deleted.');
+    runWeddingBudgetCalculations();
+  }
+
+  function renderVendorsTable() {
+    const tbody = el('wedding-vendors-tbody');
+    if (!tbody) return;
+
+    const data = getWeddingData();
+    const cur = data.settings.currency;
+
+    if (data.vendors.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; opacity:0.5;">No vendors added yet.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = data.vendors.map(v => {
+      const contactInfo = `
+        <div style="font-size:0.75rem;">
+          ${v.phone ? `<div>📞 ${v.phone}</div>` : ''}
+          ${v.email ? `<div>✉️ ${v.email}</div>` : ''}
+          ${v.website ? `<div>🌐 <a href="${v.website}" target="_blank" style="color:var(--color-accent);">website</a></div>` : ''}
+          ${(!v.phone && !v.email && !v.website) ? '<span style="opacity:0.4;">No contact info</span>' : ''}
+        </div>
+      `;
+
+      const starsStr = '★'.repeat(v.rating) + '☆'.repeat(5 - v.rating);
+
+      return `
+        <tr>
+          <td><strong>${v.name}</strong></td>
+          <td><span class="checklist-badge completed" style="background:rgba(0,120,212,0.06); color:var(--color-accent);">${v.category}</span></td>
+          <td>${contactInfo}</td>
+          <td>
+            <div style="font-size:0.75rem; opacity:0.6; text-decoration:line-through;">Quote: ${cur}${v.quote.toLocaleString()}</div>
+            <div style="font-weight:700;">Final: ${cur}${v.final.toLocaleString()}</div>
+          </td>
+          <td>
+            <div>Paid: ${cur}${v.advance.toLocaleString()}</div>
+            <div style="font-weight:700; color: ${v.balance > 0 ? '#D97706' : '#10B981'};">Bal: ${cur}${v.balance.toLocaleString()}</div>
+          </td>
+          <td>
+            <span class="checklist-badge ${v.status === 'Completed' ? 'completed' : (v.status === 'Booked' ? 'completed' : 'pending')}" style="${v.status === 'Booked' ? 'background:rgba(59,130,246,0.1); color:#3B82F6;' : ''}">
+              ${v.status}
+            </span>
+          </td>
+          <td><span class="rating-stars-read" title="${v.rating}/5 stars">${starsStr}</span></td>
+          <td>
+            <div style="display:flex; gap:0.35rem;">
+              <button class="btn outline" onclick="editWeddingVendor('${v.id}')" style="padding:0.25rem 0.5rem; font-size:0.75rem;">Edit</button>
+              <button class="btn outline" onclick="deleteWeddingVendor('${v.id}')" style="padding:0.25rem 0.5rem; font-size:0.75rem; border-color:#EF4444; color:#EF4444;">Delete</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function renderChecklistTable() {
+    const container = el('wedding-checklist-container');
+    if (!container) return;
+
+    const data = getWeddingData();
+
+    const total = data.checklist.length;
+    const checked = data.checklist.filter(c => c.checked).length;
+    const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
+
+    el('checklist-progress-text').textContent = pct + '%';
+    el('checklist-progress-bar').style.width = pct + '%';
+
+    container.innerHTML = data.checklist.map((item, idx) => `
+      <div class="checklist-card ${item.checked ? 'checked' : ''}">
+        <div class="checklist-card-left">
+          <input type="checkbox" class="w-checklist-cb" data-idx="${idx}" ${item.checked ? 'checked' : ''}>
+          <span class="checklist-label">${item.task}</span>
+        </div>
+        <span class="checklist-badge ${item.checked ? 'completed' : 'pending'}">${item.checked ? 'completed' : 'pending'}</span>
+      </div>
+    `).join('');
+
+    document.querySelectorAll('.w-checklist-cb').forEach(cb => {
+      cb.onchange = () => {
+        const idx = parseInt(cb.dataset.idx);
+        const updatedData = getWeddingData();
+        updatedData.checklist[idx].checked = cb.checked;
+        saveWeddingData(updatedData);
+        
+        const totalItems = updatedData.checklist.length;
+        const checkedItems = updatedData.checklist.filter(c => c.checked).length;
+        const currentPct = totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0;
+        
+        el('checklist-progress-text').textContent = currentPct + '%';
+        el('checklist-progress-bar').style.width = currentPct + '%';
+        
+        cb.closest('.checklist-card').classList.toggle('checked', cb.checked);
+        const badge = cb.closest('.checklist-card').querySelector('.checklist-badge');
+        if (badge) {
+          badge.className = `checklist-badge ${cb.checked ? 'completed' : 'pending'}`;
+          badge.textContent = cb.checked ? 'completed' : 'pending';
+        }
+      };
+    });
+  }
+
+  function updateWeddingCharts() {
+    const data = getWeddingData();
+    const categories = Object.keys(defaultAllocations);
+    const budget = data.settings.totalBudget;
+
+    const allocationData = categories.map(cat => budget * (parseFloat(data.allocations[cat]) || 0) / 100);
+    const spentData = categories.map(cat => data.expenses.filter(e => e.category === cat).reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0));
+    
+    const totalSpent = spentData.reduce((sum, v) => sum + v, 0);
+    const remaining = Math.max(0, budget - totalSpent);
+
+    const monthlyGroups = {};
+    data.expenses.forEach(e => {
+      if (!e.date) return;
+      const dateObj = new Date(e.date);
+      const label = dateObj.toLocaleString('default', { month: 'short', year: 'numeric' });
+      monthlyGroups[label] = (monthlyGroups[label] || 0) + e.amount;
+    });
+    const monthlyLabels = Object.keys(monthlyGroups).sort((a,b) => new Date(a) - new Date(b));
+    const monthlyData = monthlyLabels.map(l => monthlyGroups[l]);
+
+    const paidSum = data.expenses.filter(e => e.status === 'Paid').reduce((sum, e) => sum + e.amount, 0);
+    const pendingSum = data.expenses.filter(e => e.status === 'Pending').reduce((sum, e) => sum + e.amount, 0);
+
+    const renderChart = (chartId, config) => {
+      if (weddingCharts[chartId]) {
+        weddingCharts[chartId].destroy();
+      }
+      const ctx = document.getElementById(chartId);
+      if (ctx) {
+        weddingCharts[chartId] = new Chart(ctx, config);
+      }
+    };
+
+    renderChart('chart-w-allocation', {
+      type: 'pie',
+      data: {
+        labels: categories,
+        datasets: [{
+          data: allocationData,
+          backgroundColor: [
+            '#0078D4', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
+            '#EC4899', '#3B82F6', '#059669', '#D97706', '#DC2626',
+            '#7C3AED', '#DB2777', '#1D4ED8', '#047857'
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } }
+      }
+    });
+
+    renderChart('chart-w-spent-bar', {
+      type: 'bar',
+      data: {
+        labels: categories,
+        datasets: [
+          {
+            label: 'Budget',
+            data: allocationData,
+            backgroundColor: 'rgba(0, 120, 212, 0.4)',
+            borderColor: '#0078D4',
+            borderWidth: 1
+          },
+          {
+            label: 'Spent',
+            data: spentData,
+            backgroundColor: '#10B981',
+            borderColor: '#10B981',
+            borderWidth: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+
+    renderChart('chart-w-remaining-doughnut', {
+      type: 'doughnut',
+      data: {
+        labels: ['Spent', 'Remaining'],
+        datasets: [{
+          data: [totalSpent, remaining],
+          backgroundColor: ['#EF4444', '#10B981']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } }
+      }
+    });
+
+    renderChart('chart-w-monthly-line', {
+      type: 'line',
+      data: {
+        labels: monthlyLabels.length > 0 ? monthlyLabels : ['No Data'],
+        datasets: [{
+          label: 'Spent per Month',
+          data: monthlyData.length > 0 ? monthlyData : [0],
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          borderColor: '#10B981',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+
+    renderChart('chart-w-payments-pie', {
+      type: 'pie',
+      data: {
+        labels: ['Paid', 'Pending'],
+        datasets: [{
+          data: [paidSum, pendingSum],
+          backgroundColor: ['#10B981', '#F59E0B']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } }
+      }
+    });
+  }
+
+  function exportWeddingPDF() {
+    window.print();
+  }
+
+  function exportWeddingExcel() {
+    const data = getWeddingData();
+    const cur = data.settings.currency;
+    let csv = '\uFEFF';
+    
+    csv += `"Wedding Budget Allocation Ledger"\n`;
+    csv += `"Bride Name","${data.settings.brideName}","Groom Name","${data.settings.groomName}"\n`;
+    csv += `"Wedding Date","${data.settings.weddingDate}","Location","${data.settings.location}"\n\n`;
+    
+    csv += `"Category","Percentage (%)","Budget Amount (${cur})","Actual Spent (${cur})","Remaining Balance (${cur})"\n`;
+    const budget = data.settings.totalBudget;
+    Object.keys(defaultAllocations).forEach(cat => {
+      const pct = data.allocations[cat];
+      const catBudget = budget * pct / 100;
+      const actual = data.expenses.filter(e => e.category === cat).reduce((sum, e) => sum + e.amount, 0);
+      const remaining = catBudget - actual;
+      csv += `"${cat}","${pct}%","${Math.round(catBudget)}","${actual}","${Math.round(remaining)}"\n`;
+    });
+    
+    csv += `\n\n"Expenses Details"\n`;
+    csv += `"Expense Name","Category","Vendor","Amount (${cur})","Date","Payment Status","Notes"\n`;
+    data.expenses.forEach(e => {
+      csv += `"${e.name}","${e.category}","${e.vendorName || ''}","${e.amount}","${e.date}","${e.status}","${e.notes || ''}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", `wedding_budget_ledger_${data.settings.brideName}_${data.settings.groomName}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Excel ledger exported successfully.');
+  }
+
+  function exportWeddingCSV() {
+    const data = getWeddingData();
+    let csv = '"Expense ID","Expense Name","Category","Vendor","Amount","Date","Status","Notes"\n';
+    data.expenses.forEach(e => {
+      csv += `"${e.id}","${e.name}","${e.category}","${e.vendorName || ''}","${e.amount}","${e.date}","${e.status}","${e.notes || ''}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", `wedding_expenses_${data.settings.brideName}_${data.settings.groomName}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('CSV expenses exported successfully.');
+  }
+
+  function backupWeddingJSON() {
+    const data = getWeddingData();
+    const str = JSON.stringify(data, null, 2);
+    const blob = new Blob([str], { type: 'application/json' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", `wedding_planner_backup_${data.settings.brideName}_${data.settings.groomName}.json`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('JSON backup file generated successfully.');
+  }
+
+  function loadWeddingJSON(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target.result);
+        if (parsed.settings && parsed.allocations) {
+          saveWeddingData(parsed);
+          showToast('Wedding budget details restored from JSON backup!');
+          
+          el('wedding-bride-name').value = parsed.settings.brideName || 'Jane';
+          el('wedding-groom-name').value = parsed.settings.groomName || 'John';
+          el('wedding-date').value = parsed.settings.weddingDate || '2026-12-31';
+          el('wedding-location').value = parsed.settings.location || 'Grand Palace Hall';
+          el('wedding-guest-count').value = parsed.settings.guestCount || 150;
+          el('wedding-total-budget').value = parsed.settings.totalBudget || 1000000;
+          el('wedding-currency').value = parsed.settings.currency || '₹';
+          
+          runWeddingBudgetCalculations();
+        } else {
+          showToast('Invalid backup file format.', 'error');
+        }
+      } catch (err) {
+        showToast('Failed to parse backup JSON file.', 'error');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  window.editWeddingExpense = editWeddingExpense;
+  window.deleteWeddingExpense = deleteWeddingExpense;
+  window.editWeddingVendor = editWeddingVendor;
+  window.deleteWeddingVendor = deleteWeddingVendor;
 
   // ── Credit Cards Module ──────────────────────
   async function renderCreditCards() {
@@ -3171,6 +4133,22 @@
         if (sidebar) sidebar.classList.remove('mobile-open');
       });
     });
+
+    // Collapsible Sidebar Toggle
+    const collapseBtn = el('sidebar-collapse-btn');
+    if (collapseBtn && sidebar) {
+      const isCollapsed = localStorage.getItem('wealthengine_sidebar_collapsed') === 'true';
+      if (isCollapsed) {
+        sidebar.classList.add('collapsed');
+        collapseBtn.innerHTML = '▶';
+      }
+      collapseBtn.onclick = (e) => {
+        e.stopPropagation();
+        const collapsed = sidebar.classList.toggle('collapsed');
+        localStorage.setItem('wealthengine_sidebar_collapsed', collapsed);
+        collapseBtn.innerHTML = collapsed ? '▶' : '◀';
+      };
+    }
 
     // Theme toggle
     el('nav-theme-btn').onclick = toggleTheme;
