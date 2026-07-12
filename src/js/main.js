@@ -443,8 +443,44 @@
       throw new Error('Unauthorized');
     }
 
+    function toSnakeCase(obj) {
+      if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
+      const result = {};
+      for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          let snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+          result[snakeKey] = obj[key];
+        }
+      }
+      return result;
+    }
+
+    function toCamelCase(obj) {
+      if (!obj || typeof obj !== 'object') return obj;
+      if (Array.isArray(obj)) {
+        return obj.map(toCamelCase);
+      }
+      const result = {};
+      for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          let camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+          result[camelKey] = obj[key];
+        }
+      }
+      return result;
+    }
+
     if (!targetUrl) {
       throw new Error(`Endpoint ${endpoint} not supported on Supabase serverless mode.`);
+    }
+
+    if (fetchOptions.body) {
+      try {
+        const parsedBody = JSON.parse(fetchOptions.body);
+        fetchOptions.body = JSON.stringify(toSnakeCase(parsedBody));
+      } catch (e) {
+        // ignore
+      }
     }
 
     const res = await fetch(targetUrl, fetchOptions);
@@ -455,10 +491,12 @@
 
     if (method === 'GET' && (path.startsWith('/api/posts/detail') || path.startsWith('/api/news/detail') || path === '/api/settings')) {
       const items = await res.json();
-      return (items && items.length > 0) ? items[0] : (path === '/api/settings' ? {} : null);
+      const item = (items && items.length > 0) ? items[0] : (path === '/api/settings' ? {} : null);
+      return toCamelCase(item);
     }
 
-    return res.json().catch(() => ({}));
+    const data = await res.json().catch(() => ({}));
+    return toCamelCase(data);
   }
 
   // ── Theme Management ─────────────────────────
