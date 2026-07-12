@@ -1,8 +1,71 @@
 /* ==============================================
-   WEALTHENGINE — Client Engine, Router & Tools
-   main.js
-   Triggering clean UTF-8 Vercel build
+   WEALTHENGINE — Client Diagnostic Tooling
    ============================================== */
+window.onerror = function(message, source, lineno, colno, error) {
+  const errorMsg = `JS Error: ${message} at ${source}:${lineno}:${colno}`;
+  console.error(errorMsg, error);
+  localStorage.setItem('last_js_error', errorMsg + '\n' + (error ? error.stack : ''));
+  let box = document.getElementById('debug-error-box');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'debug-error-box';
+    box.style.position = 'fixed';
+    box.style.top = '10px';
+    box.style.left = '10px';
+    box.style.right = '10px';
+    box.style.background = '#FEE2E2';
+    box.style.color = '#991B1B';
+    box.style.border = '2px solid #EF4444';
+    box.style.padding = '15px';
+    box.style.borderRadius = '8px';
+    box.style.fontFamily = 'monospace';
+    box.style.fontSize = '12px';
+    box.style.zIndex = '99999';
+    box.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
+    box.style.whiteSpace = 'pre-wrap';
+    box.innerHTML = '<strong style="font-size:14px;display:block;margin-bottom:5px;">⚠️ Application Error Boundary</strong>';
+    document.body.appendChild(box);
+  }
+  const item = document.createElement('div');
+  item.style.marginTop = '10px';
+  item.style.borderTop = '1px solid rgba(239, 68, 68, 0.2)';
+  item.style.paddingTop = '10px';
+  item.textContent = `${errorMsg}\nStack: ${error ? error.stack : 'none'}`;
+  box.appendChild(item);
+};
+
+window.addEventListener('unhandledrejection', function(event) {
+  const errorMsg = `Unhandled Promise Rejection: ${event.reason}`;
+  console.error(errorMsg, event.reason);
+  localStorage.setItem('last_js_promise_error', errorMsg + '\n' + (event.reason && event.reason.stack ? event.reason.stack : ''));
+  let box = document.getElementById('debug-error-box');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'debug-error-box';
+    box.style.position = 'fixed';
+    box.style.top = '10px';
+    box.style.left = '10px';
+    box.style.right = '10px';
+    box.style.background = '#FEE2E2';
+    box.style.color = '#991B1B';
+    box.style.border = '2px solid #EF4444';
+    box.style.padding = '15px';
+    box.style.borderRadius = '8px';
+    box.style.fontFamily = 'monospace';
+    box.style.fontSize = '12px';
+    box.style.zIndex = '99999';
+    box.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
+    box.style.whiteSpace = 'pre-wrap';
+    box.innerHTML = '<strong style="font-size:14px;display:block;margin-bottom:5px;">⚠️ Application Error Boundary</strong>';
+    document.body.appendChild(box);
+  }
+  const item = document.createElement('div');
+  item.style.marginTop = '10px';
+  item.style.borderTop = '1px solid rgba(239, 68, 68, 0.2)';
+  item.style.paddingTop = '10px';
+  item.textContent = `${errorMsg}\nStack: ${event.reason && event.reason.stack ? event.reason.stack : 'none'}`;
+  box.appendChild(item);
+});
 
 (function () {
   // ── Global Client State ───────────────────────
