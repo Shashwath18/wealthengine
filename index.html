@@ -89,8 +89,12 @@
             <label>Expected Return: <span id="quick-sip-rate-val">12%</span></label>
             <input type="range" id="quick-sip-rate" min="5" max="30" step="1" value="12">
           </div>
+          <div class="calc-field-group" style="margin-top:1rem;">
+            <label>Investment Term: <span id="quick-sip-years-val">10 Years</span></label>
+            <input type="range" id="quick-sip-years" min="1" max="40" step="1" value="10">
+          </div>
           <div class="calc-result-box" style="margin-top:1.5rem; background:rgba(16,185,129,0.06); padding:1rem; border-radius:8px;">
-            <div style="font-size:0.75rem; opacity:0.6; text-transform:uppercase;">10-Year Corpus Value</div>
+            <div style="font-size:0.75rem; opacity:0.6; text-transform:uppercase;"><span id="quick-sip-res-label">10-Year</span> Corpus Value</div>
             <div id="quick-sip-result" style="font-size:1.8rem; font-weight:900; color:var(--color-accent); font-family:var(--font-display);">₹11,61,695</div>
           </div>
         </div>

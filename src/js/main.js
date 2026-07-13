@@ -749,20 +749,26 @@ window.addEventListener('unhandledrejection', function(event) {
     // Quick SIP interactive bindings
     const amtInput = el('quick-sip-amt');
     const rateInput = el('quick-sip-rate');
+    const yearsInput = el('quick-sip-years');
     
-    if (amtInput && rateInput) {
+    if (amtInput && rateInput && yearsInput) {
       const updateQuickSip = () => {
         const amt = parseInt(amtInput.value) || 0;
         const rate = parseInt(rateInput.value) || 0;
+        const years = parseInt(yearsInput.value) || 10;
         
         const valSpan = el('quick-sip-amt-val');
         const rateSpan = el('quick-sip-rate-val');
+        const yearsSpan = el('quick-sip-years-val');
+        const labelSpan = el('quick-sip-res-label');
         const resDiv = el('quick-sip-result');
         
         if (valSpan) valSpan.textContent = fmt(amt);
         if (rateSpan) rateSpan.textContent = rate + '%';
+        if (yearsSpan) yearsSpan.textContent = years + (years === 1 ? ' Year' : ' Years');
+        if (labelSpan) labelSpan.textContent = years + '-Year';
         
-        const months = 120;
+        const months = years * 12;
         const r = (rate / 12) / 100;
         const maturity = r > 0 ? amt * ((Math.pow(1 + r, months) - 1) / r) * (1 + r) : amt * months;
         if (resDiv) resDiv.textContent = fmt(maturity);
@@ -770,6 +776,7 @@ window.addEventListener('unhandledrejection', function(event) {
       
       amtInput.oninput = updateQuickSip;
       rateInput.oninput = updateQuickSip;
+      yearsInput.oninput = updateQuickSip;
       updateQuickSip();
     }
 
