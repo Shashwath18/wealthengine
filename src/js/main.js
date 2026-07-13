@@ -584,7 +584,11 @@ window.addEventListener('unhandledrejection', function(event) {
         await renderCalculators(parts[1]);
       } 
       else if (viewName === 'credit-cards') {
-        await renderCreditCards();
+        if (parts[1]) {
+          await renderCreditCardDetail(parts[1]);
+        } else {
+          await renderCreditCards();
+        }
       }
       else if (viewName === 'investing') {
         await renderInvesting();
@@ -2365,6 +2369,176 @@ window.addEventListener('unhandledrejection', function(event) {
     await setupCcComparison();
   }
 
+  async function renderCreditCardDetail(slug) {
+    const view = el('view-credit-card-detail');
+    if (!view) return;
+    view.classList.add('active');
+
+    const cards = await fetchApi('/api/cards');
+    const card = Array.isArray(cards) ? cards.find(c => c.slug === slug) : null;
+
+    const wrap = el('cc-detail-content-wrap');
+    if (!wrap) return;
+
+    if (!card) {
+      wrap.innerHTML = `
+        <div style="text-align:center; padding:4rem 0;">
+          <h2>Card Not Found</h2>
+          <p style="opacity:0.8; margin-bottom:1.5rem;">The credit card you are looking for does not exist or has been removed.</p>
+          <button class="btn primary" onclick="window.location.hash = '#credit-cards'">Back to Credit Cards</button>
+        </div>
+      `;
+      return;
+    }
+
+    const annualFeeVal = parseFloat(card.annualFee) || 0;
+    const joiningFeeVal = parseFloat(card.joiningFee) || 0;
+    const minIncomeVal = parseFloat(card.minIncome) || 0;
+
+    const prosList = card.pros ? card.pros.split(',').map(p => p.trim()).filter(Boolean) : [];
+    const consList = card.cons ? card.cons.split(',').map(c => c.trim()).filter(Boolean) : [];
+
+    wrap.innerHTML = `
+      <!-- Breadcrumb -->
+      <nav style="display:flex; gap:0.5rem; align-items:center; font-size:0.85rem; margin-bottom:1.5rem; opacity:0.8;">
+        <span style="cursor:pointer; color:var(--color-accent);" onclick="window.location.hash = '#home'">Home</span>
+        <span>/</span>
+        <span style="cursor:pointer; color:var(--color-accent);" onclick="window.location.hash = '#credit-cards'">Credit Cards</span>
+        <span>/</span>
+        <span style="opacity:0.6;">${card.name}</span>
+      </nav>
+
+      <!-- Details Grid Layout -->
+      <div style="display:grid; grid-template-columns:1fr; gap:2rem; margin-top:1rem;">
+        
+        <!-- Hero section with Card Mockup and Key CTA -->
+        <div class="checkout-panel" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:2.5rem; align-items:center; padding:2rem; background:linear-gradient(135deg, rgba(59,130,246,0.03), rgba(16,185,129,0.03)); border:1px solid var(--color-border);">
+          <div>
+            <!-- Glassmorphic premium card mockup -->
+            <div style="width:100%; max-width:360px; height:220px; border-radius:16px; background:linear-gradient(135deg, #1e3a8a, #0f172a); color:white; padding:1.5rem; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 20px 25px -5px rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); position:relative; overflow:hidden; margin:0 auto;">
+              <!-- decorative elements -->
+              <div style="position:absolute; top:-50px; right:-50px; width:150px; height:150px; border-radius:50%; background:rgba(59,130,246,0.2); filter:blur(40px);"></div>
+              <div style="position:absolute; bottom:-50px; left:-50px; width:150px; height:150px; border-radius:50%; background:rgba(16,185,129,0.2); filter:blur(40px);"></div>
+              
+              <div style="display:flex; justify-content:space-between; align-items:center; z-index:2;">
+                <span style="font-size:0.75rem; letter-spacing:2px; font-weight:700; opacity:0.8;">${card.bank ? card.bank.toUpperCase() : 'WEALTH ENGINE'}</span>
+                <span style="font-weight:900; font-style:italic; font-family:var(--font-display);">${card.network || 'VISA'}</span>
+              </div>
+              <div style="margin-top:2.5rem; z-index:2;">
+                <!-- chip graphic -->
+                <div style="width:42px; height:32px; border-radius:6px; background:linear-gradient(135deg, #fbbf24, #d97706); margin-bottom:1rem; border:1px solid rgba(255,255,255,0.15);"></div>
+                <h4 style="font-size:1.15rem; font-weight:800; letter-spacing:1px; margin:0; text-shadow:0 2px 4px rgba(0,0,0,0.5);">${card.name}</h4>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.7rem; letter-spacing:1.5px; opacity:0.7; z-index:2;">
+                <span>•••• •••• •••• 8888</span>
+                <span>VAL 12/32</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; justify-content:center; gap:1.25rem;">
+            <span style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--color-accent);">${card.bank} • ${card.network}</span>
+            <h1 style="margin:0; font-size:2.2rem; font-weight:900; color:var(--color-accent); font-family:var(--font-display); line-height:1.2;">${card.name}</h1>
+            <p style="opacity:0.85; margin:0; line-height:1.6; font-size:0.95rem;">Experience premium benefits, accelerated cashback rewards, and travel lounge privileges curated for your wealth journey.</p>
+            
+            <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:0.5rem;">
+              <a href="${card.applyLink || '#credit-cards'}" target="_blank" class="btn primary" style="text-decoration:none; text-align:center; padding:0.75rem 2rem; font-size:0.9rem; font-weight:700;">Apply Now ➔</a>
+              <button class="btn outline" onclick="window.location.hash = '#credit-cards'" style="padding:0.75rem 1.5rem; font-size:0.9rem;">Back to Listings</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overview KPI Grid -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.25rem;">
+          <div class="checkout-panel" style="padding:1.25rem; text-align:center;">
+            <span style="font-size:0.75rem; opacity:0.6; text-transform:uppercase; font-weight:700;">Annual Fee</span>
+            <h2 style="margin:0.25rem 0 0; font-size:1.8rem; font-weight:800; color:var(--color-accent);">${annualFeeVal === 0 ? 'Free' : fmt(annualFeeVal)}</h2>
+          </div>
+          <div class="checkout-panel" style="padding:1.25rem; text-align:center;">
+            <span style="font-size:0.75rem; opacity:0.6; text-transform:uppercase; font-weight:700;">Joining Fee</span>
+            <h2 style="margin:0.25rem 0 0; font-size:1.8rem; font-weight:800; color:var(--color-accent);">${joiningFeeVal === 0 ? 'Free' : fmt(joiningFeeVal)}</h2>
+          </div>
+          <div class="checkout-panel" style="padding:1.25rem; text-align:center;">
+            <span style="font-size:0.75rem; opacity:0.6; text-transform:uppercase; font-weight:700;">Interest Rate (APR)</span>
+            <h2 style="margin:0.25rem 0 0; font-size:1.8rem; font-weight:800; color:var(--color-accent);">${card.apr || 36}% p.a.</h2>
+          </div>
+          <div class="checkout-panel" style="padding:1.25rem; text-align:center;">
+            <span style="font-size:0.75rem; opacity:0.6; text-transform:uppercase; font-weight:700;">Interest Free Days</span>
+            <h2 style="margin:0.25rem 0 0; font-size:1.8rem; font-weight:800; color:var(--color-accent);">${card.interestFreeDays || 45} Days</h2>
+          </div>
+        </div>
+
+        <!-- Detailed Specifications Grid -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; flex-wrap:wrap;">
+          
+          <!-- Key Features & Reward Rates -->
+          <div style="display:flex; flex-direction:column; gap:1.5rem;">
+            <div class="checkout-panel" style="padding:1.5rem; flex:1;">
+              <h3 style="margin-top:0; margin-bottom:1.25rem; font-size:1.15rem; color:var(--color-accent); border-bottom:1px solid var(--color-border); padding-bottom:0.5rem;">🎁 Welcome & Milestone Benefits</h3>
+              <p style="line-height:1.6; margin:0; font-size:0.92rem;">${card.welcomeBonus || 'No welcome bonus specified.'}</p>
+            </div>
+            
+            <div class="checkout-panel" style="padding:1.5rem; flex:1;">
+              <h3 style="margin-top:0; margin-bottom:1.25rem; font-size:1.15rem; color:var(--color-accent); border-bottom:1px solid var(--color-border); padding-bottom:0.5rem;">💰 Rewards Rate & Structure</h3>
+              <p style="line-height:1.6; margin:0; font-size:0.92rem;">${card.rewardRate || 'No rewards rate specified.'}</p>
+            </div>
+          </div>
+
+          <!-- Lounge and Cashback Benefits -->
+          <div style="display:flex; flex-direction:column; gap:1.5rem;">
+            <div class="checkout-panel" style="padding:1.5rem; flex:1;">
+              <h3 style="margin-top:0; margin-bottom:1.25rem; font-size:1.15rem; color:var(--color-accent); border-bottom:1px solid var(--color-border); padding-bottom:0.5rem;">✈️ Airport Lounge Privileges</h3>
+              <p style="line-height:1.6; margin:0; font-size:0.92rem;">${card.airportLounge || 'No lounge access benefits specified.'}</p>
+            </div>
+
+            <div class="checkout-panel" style="padding:1.5rem; flex:1;">
+              <h3 style="margin-top:0; margin-bottom:1.25rem; font-size:1.15rem; color:var(--color-accent); border-bottom:1px solid var(--color-border); padding-bottom:0.5rem;">💳 Cashback Rates</h3>
+              <p style="line-height:1.6; margin:0; font-size:0.92rem;">${card.cashback || 'No cashback details specified.'}</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Eligibility Criteria -->
+        <div class="checkout-panel" style="padding:1.5rem;">
+          <h3 style="margin-top:0; margin-bottom:1.25rem; font-size:1.15rem; color:var(--color-accent); border-bottom:1px solid var(--color-border); padding-bottom:0.5rem;">📋 Eligibility & Score Guidelines</h3>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1.5rem;">
+            <div>
+              <span style="font-size:0.75rem; opacity:0.6; text-transform:uppercase; font-weight:700;">Min Monthly Income</span>
+              <h4 style="margin:0.25rem 0 0; font-size:1.2rem; font-weight:700;">${minIncomeVal === 0 ? 'Not specified' : fmt(minIncomeVal)}</h4>
+            </div>
+            <div>
+              <span style="font-size:0.75rem; opacity:0.6; text-transform:uppercase; font-weight:700;">Recommended Credit Score</span>
+              <h4 style="margin:0.25rem 0 0; font-size:1.2rem; font-weight:700;">${card.creditScore || '700+'} (Excellent / Good)</h4>
+            </div>
+            <div>
+              <span style="font-size:0.75rem; opacity:0.6; text-transform:uppercase; font-weight:700;">Age Limit</span>
+              <h4 style="margin:0.25rem 0 0; font-size:1.2rem; font-weight:700;">Min 18 Years</h4>
+            </div>
+          </div>
+        </div>
+
+        <!-- Side-by-side Pros and Cons -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; flex-wrap:wrap;">
+          <div class="checkout-panel" style="padding:1.5rem; border-left:4px solid #10b981;">
+            <h3 style="margin-top:0; color:#10b981; font-size:1.1rem; margin-bottom:1rem;">👍 Advantages (Pros)</h3>
+            <ul style="margin:0; padding-left:1.2rem; line-height:1.6; font-size:0.9rem; display:flex; flex-direction:column; gap:0.5rem;">
+              ${prosList.map(p => `<li>${p}</li>`).join('') || '<li>No pros listed.</li>'}
+            </ul>
+          </div>
+          
+          <div class="checkout-panel" style="padding:1.5rem; border-left:4px solid #ef4444;">
+            <h3 style="margin-top:0; color:#ef4444; font-size:1.1rem; margin-bottom:1rem;">👎 Disadvantages (Cons)</h3>
+            <ul style="margin:0; padding-left:1.2rem; line-height:1.6; font-size:0.9rem; display:flex; flex-direction:column; gap:0.5rem;">
+              ${consList.map(c => `<li>${c}</li>`).join('') || '<li>No cons listed.</li>'}
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    `;
+  }
+
   function renderCardImageHtml(c) {
     if (c.image && (c.image.toLowerCase().endsWith('.png') || c.image.toLowerCase().endsWith('.jpg') || c.image.toLowerCase().endsWith('.jpeg') || c.image.toLowerCase().startsWith('data:image') || c.image.toLowerCase().startsWith('http'))) {
       if (c.image.includes('unsplash.com/photo-') && !c.image.includes('card')) {
@@ -2437,7 +2611,7 @@ window.addEventListener('unhandledrejection', function(event) {
 
     if (filtered.length > 0) {
       grid.innerHTML = filtered.map(c => `
-        <div class="article-grid-card">
+        <div class="article-grid-card" onclick="window.location.hash = '#credit-cards/${c.slug}'" style="cursor:pointer;">
           ${renderCardImageHtml(c)}
           <div class="article-grid-card-content">
             <span style="font-size:0.68rem; font-weight:800; text-transform:uppercase; color:var(--color-accent);">${c.bank} - ${c.network}</span>

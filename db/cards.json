@@ -1,1 +1,22 @@
-[]
+[
+  {
+    "id": "card-hdfc-millennia",
+    "name": "HDFC Bank Millennia Credit Card",
+    "bank": "HDFC Bank",
+    "network": "Visa",
+    "annualFee": 1000,
+    "joiningFee": 1000,
+    "apr": 42,
+    "interestFreeDays": 50,
+    "minIncome": 35000,
+    "creditScore": 750,
+    "welcomeBonus": "₹1,000 worth of CashPoints on eligible spends within the first 90 days.",
+    "rewardRate": "Rewards Rate 5% CashPoints on Amazon, Flipkart, Swiggy, Zomato, Myntra, and select merchants; 1% on other eligible spends.",
+    "airportLounge": "4 complimentary domestic lounge visits per year (subject to spending criteria).",
+    "cashback": "5% on partner merchants, 1% on other eligible transactions.",
+    "pros": "High cashback, Excellent for online shopping, Fuel surcharge waiver, Contactless payments, EMI conversion option",
+    "cons": "Annual fee applies, Lounge access has spending conditions, Foreign currency markup, Cashback cap on select categories",
+    "applyLink": "",
+    "slug": "hdfc-bank-millennia-credit-card"
+  }
+]
