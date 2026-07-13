@@ -1935,12 +1935,37 @@
                   </div>
                 </div>
 
-                <!-- Hidden default attributes to keep data layer working -->
-                <input type="text" id="admin-post-tags" style="display:none;" value="Investing">
-                <input type="datetime-local" id="admin-post-schedule" style="display:none;">
-                <input type="text" id="admin-post-seo-title" style="display:none;">
-                <input type="text" id="admin-post-seo-desc" style="display:none;">
-                <input type="text" id="admin-post-excerpt" style="display:none;">
+                <!-- Article Meta Details Row -->
+                <div class="form-row" style="margin-bottom:1.25rem;">
+                  <div class="field-group">
+                    <label>Tags (comma separated)</label>
+                    <input type="text" id="admin-post-tags" value="Investing" placeholder="e.g. Investing, Stocks, Wealth">
+                  </div>
+                  <div class="field-group">
+                    <label>Short Excerpt</label>
+                    <input type="text" id="admin-post-excerpt" placeholder="Brief summary of the article...">
+                  </div>
+                </div>
+
+                <!-- SEO Details Row -->
+                <div class="form-row" style="margin-bottom:1.25rem;">
+                  <div class="field-group">
+                    <label>SEO Title</label>
+                    <input type="text" id="admin-post-seo-title" placeholder="SEO optimized title...">
+                  </div>
+                  <div class="field-group">
+                    <label>SEO Meta Description</label>
+                    <input type="text" id="admin-post-seo-desc" placeholder="SEO search result snippet...">
+                  </div>
+                </div>
+
+                <!-- Scheduling Row -->
+                <div style="margin-bottom:1.25rem; max-width:300px;">
+                  <div class="field-group">
+                    <label>Scheduled Publish Time (Optional)</label>
+                    <input type="datetime-local" id="admin-post-schedule">
+                  </div>
+                </div>
  
                 <div class="form-row" style="margin-bottom:1.25rem;">
                   <div class="field-group">

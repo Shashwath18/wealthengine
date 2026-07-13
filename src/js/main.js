@@ -3139,9 +3139,20 @@ window.addEventListener('unhandledrejection', function(event) {
 
   // ── 1. Dashboard Subpanel ──
   async function renderAdminPostsTable() {
-    const posts = await fetchApi('/api/posts?status=all');
-    const categories = await fetchApi('/api/categories');
     const tbody = el('admin-posts-tbody');
+    if (!tbody) return;
+
+    let posts = [];
+    let categories = [];
+    try {
+      const postsRes = await fetchApi('/api/posts?status=all');
+      posts = Array.isArray(postsRes) ? postsRes : [];
+      const categoriesRes = await fetchApi('/api/categories');
+      categories = Array.isArray(categoriesRes) ? categoriesRes : [];
+    } catch (e) {
+      console.error('Failed to load posts/categories:', e);
+      showToast('Failed to load articles: ' + e.message, 'error');
+    }
     
     tbody.innerHTML = posts.map(post => `
       <tr>
@@ -3165,26 +3176,33 @@ window.addEventListener('unhandledrejection', function(event) {
   }
 
   async function loadPostToEditor(postId) {
-    const post = await fetchApi(`/api/posts/detail?id=${postId}`);
-    el('admin-post-edit-id').value = post.id;
-    el('admin-post-title').value = post.title;
-    el('admin-post-image').value = post.featuredImage;
-    el('admin-post-tags').value = (post.tags || []).join(', ');
-    el('admin-post-excerpt').value = post.excerpt;
-    el('admin-post-content').value = post.content;
-    el('admin-post-status').value = post.status;
-    el('admin-post-schedule').value = post.scheduledAt || '';
-    el('admin-post-seo-title').value = post.seoTitle || '';
-    el('admin-post-seo-desc').value = post.seoDesc || '';
+    try {
+      const post = await fetchApi(`/api/posts/detail?id=${postId}`);
+      if (!post) return;
+      el('admin-post-edit-id').value = post.id || '';
+      el('admin-post-title').value = post.title || '';
+      el('admin-post-image').value = post.featuredImage || '';
+      el('admin-post-tags').value = (post.tags || []).join(', ');
+      el('admin-post-excerpt').value = post.excerpt || '';
+      el('admin-post-content').value = post.content || '';
+      el('admin-post-status').value = post.status || 'Published';
+      el('admin-post-schedule').value = post.scheduledAt || '';
+      el('admin-post-seo-title').value = post.seoTitle || '';
+      el('admin-post-seo-desc').value = post.seoDesc || '';
 
-    const categories = await fetchApi('/api/categories');
-    const select = el('admin-post-category');
-    select.innerHTML = categories.map(c => `
-      <option value="${c.id}" ${post.categoryId === c.id ? 'selected' : ''}>${c.name}</option>
-    `).join('');
+      const categories = await fetchApi('/api/categories');
+      const select = el('admin-post-category');
+      if (select) {
+        select.innerHTML = (Array.isArray(categories) ? categories : []).map(c => `
+          <option value="${c.id}" ${post.categoryId === c.id ? 'selected' : ''}>${c.name}</option>
+        `).join('');
+      }
 
-    el('admin-editor-title').textContent = 'Edit Finance Article';
-    el('admin-post-editor-form-wrap').style.display = 'block';
+      el('admin-editor-title').textContent = 'Edit Finance Article';
+      el('admin-post-editor-form-wrap').style.display = 'block';
+    } catch (e) {
+      showToast('Failed to load article detail: ' + e.message, 'error');
+    }
   }
 
   async function deletePostAdmin(postId) {
@@ -3200,8 +3218,17 @@ window.addEventListener('unhandledrejection', function(event) {
 
   // ── 3. Credit Cards Subpanel ──
   async function renderAdminCardsTable() {
-    const cards = await fetchApi('/api/cards');
     const tbody = el('admin-cards-tbody');
+    if (!tbody) return;
+
+    let cards = [];
+    try {
+      const res = await fetchApi('/api/cards');
+      cards = Array.isArray(res) ? res : [];
+    } catch (e) {
+      console.error('Failed to load cards:', e);
+      showToast('Failed to load credit cards: ' + e.message, 'error');
+    }
     
     tbody.innerHTML = cards.map(c => `
       <tr>
@@ -3758,7 +3785,8 @@ window.addEventListener('unhandledrejection', function(event) {
 
   async function loadNewsDashboardStats() {
     try {
-      const newsList = await fetchApi('/api/news?status=all');
+      const res = await fetchApi('/api/news?status=all');
+      const newsList = Array.isArray(res) ? res : [];
       
       const totalViews = newsList.reduce((sum, n) => sum + (n.views || 0), 0);
       const breakingCount = newsList.filter(n => n.breaking).length;
@@ -3776,8 +3804,10 @@ window.addEventListener('unhandledrejection', function(event) {
 
   async function renderAdminNewsTable() {
     try {
-      const newsList = await fetchApi('/api/news?status=all');
+      const res = await fetchApi('/api/news?status=all');
+      const newsList = Array.isArray(res) ? res : [];
       const tbody = el('admin-news-tbody');
+      if (!tbody) return;
       selectedAdminNewsIds = [];
 
       tbody.innerHTML = newsList.map(news => `
