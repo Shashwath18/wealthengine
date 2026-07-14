@@ -1,0 +1,20 @@
+[
+  {
+    "id": "inv-1",
+    "name": "S&P 500 Passive ETF",
+    "category": "etf",
+    "desc": "Passive funds tracking index baskets (like S&P 500 or Nifty 50), trading directly on exchanges like normal stocks."
+  },
+  {
+    "id": "inv-2",
+    "name": "GrowMax Active Equity Mutual Fund",
+    "category": "mutual-fund",
+    "desc": "Pooled investment portfolios managed by professional fund managers, trading once daily at Net Asset Value (NAV)."
+  },
+  {
+    "id": "inv-3",
+    "name": "Apex Prime Commercial REIT",
+    "category": "reit",
+    "desc": "Trust companies owning rent-generating real estate, distributing 90% of taxable income to shareholders as dividends."
+  }
+]

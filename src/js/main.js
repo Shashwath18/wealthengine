@@ -180,7 +180,12 @@ window.addEventListener('unhandledrejection', function(event) {
 
   // ── Helpers ──────────────────────────────────
   function el(id) { return document.getElementById(id); }
-  function fmt(num) { return '₹' + Math.round(num).toLocaleString('en-IN'); }
+  function fmt(num) {
+    if (num === null || num === undefined || num === '') return '';
+    const parsed = parseFloat(num);
+    if (isNaN(parsed)) return num;
+    return '₹' + Math.round(parsed).toLocaleString('en-IN');
+  }
   
   function getAuthorName(origName) {
     if (!origName || origName.toLowerCase().includes('shashwath')) {
@@ -409,6 +414,22 @@ window.addEventListener('unhandledrejection', function(event) {
           fetchOptions.body = JSON.stringify(bodyObj);
           targetUrl = `${SUPABASE_URL}/rest/v1/settings`;
         }
+      }
+    } else if (path === '/api/admin/investing') {
+      const id = params.get('id') || bodyObj.id;
+      if (method === 'GET') {
+        targetUrl = `${SUPABASE_URL}/rest/v1/investing?select=*`;
+      } else if (method === 'POST') {
+        bodyObj.id = bodyObj.id || ("inv-" + Math.random().toString(36).substring(2, 10));
+        fetchOptions.body = JSON.stringify(bodyObj);
+        targetUrl = `${SUPABASE_URL}/rest/v1/investing`;
+      } else if (method === 'PUT') {
+        fetchOptions.method = 'PATCH';
+        fetchOptions.body = JSON.stringify(bodyObj);
+        targetUrl = `${SUPABASE_URL}/rest/v1/investing?id=eq.${id}`;
+      } else if (method === 'DELETE') {
+        const itemId = params.get('id');
+        targetUrl = `${SUPABASE_URL}/rest/v1/investing?id=eq.${itemId}`;
       }
     } else if (path === '/api/admin/analytics') {
       const pRes = await fetch(`${SUPABASE_URL}/rest/v1/posts?select=*`, { headers });
@@ -2845,19 +2866,29 @@ window.addEventListener('unhandledrejection', function(event) {
   // ── Investing View ───────────────────────────
   async function renderInvesting() {
     const view = el('view-investing');
+    if (!view) return;
     view.classList.add('active');
 
-    const terms = await fetchApi('/api/glossary');
     const container = el('investing-types-list');
+    if (!container) return;
 
-    const invTerms = terms.filter(t => ['ETF', 'SIP', 'Asset Allocation', 'Diversification', 'Mutual Fund', 'FIRE'].includes(t.term));
-    if (invTerms.length > 0) {
-      container.innerHTML = invTerms.map((t, idx) => `
+    let items = [];
+    try {
+      const res = await fetchApi('/api/admin/investing');
+      items = Array.isArray(res) ? res : [];
+    } catch (e) {
+      console.error('Failed to load investing items:', e);
+    }
+
+    if (items.length > 0) {
+      container.innerHTML = items.map((item, idx) => `
         <div style="${idx > 0 ? 'border-top:1px solid var(--color-border); padding-top:1rem;' : ''}">
-          <strong style="color:var(--color-accent); font-size:1.05rem;">${t.term} (${t.title})</strong>
-          <p style="font-size:0.88rem; opacity:0.8; margin-top:0.3rem;">${t.definition}</p>
+          <strong style="color:var(--color-accent); font-size:1.05rem; text-transform:uppercase;">${item.name} (${item.category.replace('-', ' ')})</strong>
+          <p style="font-size:0.88rem; opacity:0.8; margin-top:0.3rem;">${item.desc || item.description || ''}</p>
         </div>
       `).join('');
+    } else {
+      container.innerHTML = `<div style="text-align:center; opacity:0.5; padding:2rem 0;">No investment items published yet.</div>`;
     }
   }
 
@@ -2958,6 +2989,7 @@ window.addEventListener('unhandledrejection', function(event) {
           else if (activeTab === 'news') await renderAdminNews();
           else if (activeTab === 'posts') await renderAdminPostsTable();
           else if (activeTab === 'cards') await renderAdminCardsTable();
+          else if (activeTab === 'investing') await renderAdminInvestingTable();
         };
       });
     };
@@ -3424,6 +3456,64 @@ window.addEventListener('unhandledrejection', function(event) {
     });
   }
 
+  async function renderAdminInvestingTable() {
+    const tbody = el('admin-invest-tbody');
+    if (!tbody) return;
+
+    let items = [];
+    try {
+      const res = await fetchApi('/api/admin/investing');
+      items = Array.isArray(res) ? res : [];
+    } catch (e) {
+      console.error('Failed to load investing items:', e);
+      showToast('Failed to load investing items: ' + e.message, 'error');
+    }
+
+    tbody.innerHTML = items.map(item => `
+      <tr>
+        <td><strong>${item.name}</strong></td>
+        <td><span class="user-role-badge user">${item.category.toUpperCase()}</span></td>
+        <td style="max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.desc || item.description || ''}</td>
+        <td>
+          <button class="btn outline edit-invest-act" data-id="${item.id}" style="padding:0.4rem 0.8rem; font-size:0.75rem;">Edit</button>
+          <button class="btn outline del-invest-act" data-id="${item.id}" style="padding:0.4rem 0.8rem; font-size:0.75rem; color:var(--color-error); border-color:rgba(239,68,68,0.2);">Delete</button>
+        </td>
+      </tr>
+    `).join('');
+
+    tbody.querySelectorAll('.edit-invest-act').forEach(btn => {
+      btn.onclick = () => loadInvestToEditor(btn.dataset.id);
+    });
+    tbody.querySelectorAll('.del-invest-act').forEach(btn => {
+      btn.onclick = () => deleteInvestAdmin(btn.dataset.id);
+    });
+  }
+
+  async function loadInvestToEditor(id) {
+    const res = await fetchApi('/api/admin/investing');
+    const items = Array.isArray(res) ? res : [];
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+
+    el('admin-invest-id').value = item.id;
+    el('admin-invest-name').value = item.name;
+    el('admin-invest-category').value = item.category;
+    el('admin-invest-desc').value = item.desc || item.description || '';
+    el('admin-invest-editor-title').textContent = 'Edit Investment Item';
+  }
+
+  async function deleteInvestAdmin(id) {
+    if (!confirm('Are you sure you want to delete this investment item?')) return;
+    try {
+      await fetchApi(`/api/admin/investing?id=${id}`, { method: 'DELETE' });
+      showToast('Investment item deleted.');
+      await renderAdminInvestingTable();
+      await renderInvesting();
+    } catch (e) {
+      showToast('Delete failed: ' + e.message, 'error');
+    }
+  }
+
   async function loadCardToEditor(cardId) {
     const cards = await fetchApi('/api/cards');
     const card = cards.find(c => c.id === cardId);
@@ -3627,11 +3717,11 @@ window.addEventListener('unhandledrejection', function(event) {
         const bank = el('admin-card-bank').value.trim();
         const network = el('admin-card-network').value;
         const image = el('admin-card-image').value.trim();
-        const annualFee = parseFloat(el('admin-card-annual-fee').value) || 0;
-        const joiningFee = parseFloat(el('admin-card-joining-fee').value) || 0;
+        const annualFee = el('admin-card-annual-fee').value.trim();
+        const joiningFee = el('admin-card-joining-fee').value.trim();
         const apr = parseFloat(el('admin-card-apr').value) || 0;
         const interestFreeDays = parseFloat(el('admin-card-grace-days').value) || 0;
-        const minIncome = parseFloat(el('admin-card-min-income').value) || 0;
+        const minIncome = el('admin-card-min-income').value.trim();
         const creditScore = parseFloat(el('admin-card-min-score').value) || 0;
         const welcomeBonus = el('admin-card-bonus').value.trim();
         const rewardRate = el('admin-card-reward-rate').value.trim();
@@ -3731,6 +3821,41 @@ window.addEventListener('unhandledrejection', function(event) {
           showToast('Platform core configurations saved.');
         } catch (err) {
           showToast(err.message, 'error');
+        }
+      };
+    }
+
+    // ── Investing Editor Events ──
+    const investForm = el('admin-invest-form');
+    if (investForm) {
+      investForm.onsubmit = async (e) => {
+        e.preventDefault();
+        const id = el('admin-invest-id').value;
+        const name = el('admin-invest-name').value.trim();
+        const category = el('admin-invest-category').value;
+        const desc = el('admin-invest-desc').value.trim();
+
+        const bodyObj = { id, name, category, desc };
+
+        try {
+          if (id) {
+            await fetchApi('/api/admin/investing', { method: 'PUT', body: bodyObj });
+            showToast('Investment item updated.');
+          } else {
+            await fetchApi('/api/admin/investing', { method: 'POST', body: bodyObj });
+            showToast('Investment item created.');
+          }
+          // Reset form
+          el('admin-invest-id').value = '';
+          el('admin-invest-name').value = '';
+          el('admin-invest-category').value = 'etf';
+          el('admin-invest-desc').value = '';
+          el('admin-invest-editor-title').textContent = 'Add Investment Item';
+
+          await renderAdminInvestingTable();
+          await renderInvesting();
+        } catch (err) {
+          showToast('Save failed: ' + err.message, 'error');
         }
       };
     }
