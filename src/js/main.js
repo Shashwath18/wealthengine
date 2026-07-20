@@ -2881,12 +2881,15 @@ window.addEventListener('unhandledrejection', function(event) {
     }
 
     if (items.length > 0) {
-      container.innerHTML = items.map((item, idx) => `
-        <div style="${idx > 0 ? 'border-top:1px solid var(--color-border); padding-top:1rem;' : ''}">
-          <strong style="color:var(--color-accent); font-size:1.05rem; text-transform:uppercase;">${item.name} (${item.category.replace('-', ' ')})</strong>
-          <p style="font-size:0.88rem; opacity:0.8; margin-top:0.3rem;">${item.desc || item.description || ''}</p>
-        </div>
-      `).join('');
+      container.innerHTML = items.filter(Boolean).map((item, idx) => {
+        const cat = item.category ? item.category.replace('-', ' ') : '';
+        return `
+          <div style="${idx > 0 ? 'border-top:1px solid var(--color-border); padding-top:1rem;' : ''}">
+            <strong style="color:var(--color-accent); font-size:1.05rem; text-transform:uppercase;">${item.name || ''} ${cat ? '(' + cat + ')' : ''}</strong>
+            <p style="font-size:0.88rem; opacity:0.8; margin-top:0.3rem;">${item.desc || item.description || ''}</p>
+          </div>
+        `;
+      }).join('');
     } else {
       container.innerHTML = `<div style="text-align:center; opacity:0.5; padding:2rem 0;">No investment items published yet.</div>`;
     }
@@ -3469,14 +3472,14 @@ window.addEventListener('unhandledrejection', function(event) {
       showToast('Failed to load investing items: ' + e.message, 'error');
     }
 
-    tbody.innerHTML = items.map(item => `
+    tbody.innerHTML = items.filter(Boolean).map(item => `
       <tr>
-        <td><strong>${item.name}</strong></td>
-        <td><span class="user-role-badge user">${item.category.toUpperCase()}</span></td>
+        <td><strong>${item.name || ''}</strong></td>
+        <td><span class="user-role-badge user">${(item.category || '').toUpperCase()}</span></td>
         <td style="max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.desc || item.description || ''}</td>
         <td>
-          <button class="btn outline edit-invest-act" data-id="${item.id}" style="padding:0.4rem 0.8rem; font-size:0.75rem;">Edit</button>
-          <button class="btn outline del-invest-act" data-id="${item.id}" style="padding:0.4rem 0.8rem; font-size:0.75rem; color:var(--color-error); border-color:rgba(239,68,68,0.2);">Delete</button>
+          <button class="btn outline edit-invest-act" data-id="${item.id || ''}" style="padding:0.4rem 0.8rem; font-size:0.75rem;">Edit</button>
+          <button class="btn outline del-invest-act" data-id="${item.id || ''}" style="padding:0.4rem 0.8rem; font-size:0.75rem; color:var(--color-error); border-color:rgba(239,68,68,0.2);">Delete</button>
         </td>
       </tr>
     `).join('');
@@ -3495,9 +3498,9 @@ window.addEventListener('unhandledrejection', function(event) {
     const item = items.find(i => i.id === id);
     if (!item) return;
 
-    el('admin-invest-id').value = item.id;
-    el('admin-invest-name').value = item.name;
-    el('admin-invest-category').value = item.category;
+    el('admin-invest-id').value = item.id || '';
+    el('admin-invest-name').value = item.name || '';
+    el('admin-invest-category').value = item.category || 'etf';
     el('admin-invest-desc').value = item.desc || item.description || '';
     el('admin-invest-editor-title').textContent = 'Edit Investment Item';
   }
@@ -4287,10 +4290,10 @@ window.addEventListener('unhandledrejection', function(event) {
         const title = el('admin-news-title').value.trim();
         const slug = el('admin-news-slug').value.trim();
         const author = el('admin-news-author').value.trim() || 'WealthEngine News Desk';
-        const shortDescription = el('admin-news-short-desc').value.trim();
+        const shortDescription = el('admin-news-short-desc').value.trim() || (content.length > 120 ? content.substring(0, 120) + '...' : content);
         const content = el('admin-news-content').value.trim();
         const category = el('admin-news-category').value;
-        const tagInput = el('admin-news-tags').value.trim();
+        const tagInput = el('admin-news-tags').value.trim() || 'News';
         const publishDate = el('admin-news-publish-date').value;
         const status = el('admin-news-status').value;
         const featured = el('admin-news-featured').checked;

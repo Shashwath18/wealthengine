@@ -32,7 +32,6 @@
       <a href="#articles" class="sidebar-link"><span class="icon">📝</span> <span class="link-text">Articles</span></a>
       <a href="#calculators" class="sidebar-link"><span class="icon">🧮</span> <span class="link-text">Calculators</span></a>
       <a href="#credit-cards" class="sidebar-link"><span class="icon">💳</span> <span class="link-text">Credit Cards</span></a>
-      <a href="#investing" class="sidebar-link"><span class="icon">💹</span> <span class="link-text">Investing</span></a>
       <a href="#about" class="sidebar-link"><span class="icon">ℹ️</span> <span class="link-text">About</span></a>
     </nav>
     
@@ -1765,10 +1764,7 @@
                     </div>
                   </div>
 
-                  <div class="field-group" style="margin-bottom:1rem;">
-                    <label>Short Description / Excerpt</label>
-                    <input type="text" id="admin-news-short-desc" required placeholder="Faint summaries for indices grid cards...">
-                  </div>
+                  <input type="hidden" id="admin-news-short-desc">
 
                   <div class="field-group" style="margin-bottom:1rem;">
                     <label>Full Content (Rich Text / Markdown support)</label>
@@ -1792,11 +1788,8 @@
                         <option value="Taxes & Retirement">Taxes & Retirement</option>
                       </select>
                     </div>
-                    <div class="field-group">
-                      <label>Tags (Comma separated)</label>
-                      <input type="text" id="admin-news-tags" placeholder="e.g. Treasury, S&P 500, Yields">
-                    </div>
                   </div>
+                  <input type="hidden" id="admin-news-tags" value="News">
 
                   <div class="form-row" style="margin-bottom:1.5rem;">
                     <div class="field-group">
@@ -1828,20 +1821,10 @@
                     </label>
                   </div>
 
-                  <!-- SEO Settings -->
-                  <h4 style="margin-bottom:1rem; border-bottom:1px solid var(--color-border); padding-bottom:0.5rem;">SEO Configurations</h4>
-                  <div class="field-group" style="margin-bottom:1rem;">
-                    <label>SEO Title</label>
-                    <input type="text" id="admin-news-seo-title" placeholder="Meta title for Google search index...">
-                  </div>
-                  <div class="field-group" style="margin-bottom:1rem;">
-                    <label>Meta Description</label>
-                    <input type="text" id="admin-news-seo-desc" placeholder="Search snippet showing target summary...">
-                  </div>
-                  <div class="field-group" style="margin-bottom:2rem;">
-                    <label>Canonical URL</label>
-                    <input type="url" id="admin-news-canonical" placeholder="http://localhost:8083/#news/slug">
-                  </div>
+                  <!-- Hidden SEO fields -->
+                  <input type="hidden" id="admin-news-seo-title">
+                  <input type="hidden" id="admin-news-seo-desc">
+                  <input type="hidden" id="admin-news-canonical">
 
                   <div style="display:flex; gap:1rem;">
                     <button type="submit" class="btn primary" style="flex:2;">Save Article</button>
