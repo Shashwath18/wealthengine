@@ -2419,23 +2419,12 @@ window.addEventListener('unhandledrejection', function(event) {
     const prosList = card.pros ? card.pros.split(',').map(p => p.trim()).filter(Boolean) : [];
     const consList = card.cons ? card.cons.split(',').map(c => c.trim()).filter(Boolean) : [];
 
-    wrap.innerHTML = `
-      <!-- Breadcrumb -->
-      <nav style="display:flex; gap:0.5rem; align-items:center; font-size:0.85rem; margin-bottom:1.5rem; opacity:0.8;">
-        <span style="cursor:pointer; color:var(--color-accent);" onclick="window.location.hash = '#home'">Home</span>
-        <span>/</span>
-        <span style="cursor:pointer; color:var(--color-accent);" onclick="window.location.hash = '#credit-cards'">Credit Cards</span>
-        <span>/</span>
-        <span style="opacity:0.6;">${card.name}</span>
-      </nav>
-
-      <!-- Details Grid Layout -->
-      <div style="display:grid; grid-template-columns:1fr; gap:2rem; margin-top:1rem;">
-        
-        <!-- Hero section with Card Mockup and Key CTA -->
-        <div class="checkout-panel" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:2.5rem; align-items:center; padding:2rem; background:linear-gradient(135deg, rgba(59,130,246,0.03), rgba(16,185,129,0.03)); border:1px solid var(--color-border);">
-          <div>
-            <!-- Glassmorphic premium card mockup -->
+    // Choose between actual image or premium glassmorphic mockup
+    let cardImageHtml = '';
+    if (card.image && (card.image.toLowerCase().endsWith('.png') || card.image.toLowerCase().endsWith('.jpg') || card.image.toLowerCase().endsWith('.jpeg') || card.image.toLowerCase().endsWith('.webp') || card.image.toLowerCase().startsWith('data:image') || card.image.toLowerCase().startsWith('http'))) {
+      cardImageHtml = `<img src="${card.image}" alt="${card.name}" style="width:100%; max-width:360px; height:auto; max-height:220px; object-fit:contain; border-radius:16px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.3); display:block; margin:0 auto;">`;
+    } else {
+      cardImageHtml = `
             <div style="width:100%; max-width:360px; height:220px; border-radius:16px; background:linear-gradient(135deg, #1e3a8a, #0f172a); color:white; padding:1.5rem; display:flex; flex-direction:column; justify-content:space-between; box-shadow:0 20px 25px -5px rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); position:relative; overflow:hidden; margin:0 auto;">
               <!-- decorative elements -->
               <div style="position:absolute; top:-50px; right:-50px; width:150px; height:150px; border-radius:50%; background:rgba(59,130,246,0.2); filter:blur(40px);"></div>
@@ -2455,6 +2444,26 @@ window.addEventListener('unhandledrejection', function(event) {
                 <span>VAL 12/32</span>
               </div>
             </div>
+      `;
+    }
+
+    wrap.innerHTML = `
+      <!-- Breadcrumb -->
+      <nav style="display:flex; gap:0.5rem; align-items:center; font-size:0.85rem; margin-bottom:1.5rem; opacity:0.8;">
+        <span style="cursor:pointer; color:var(--color-accent);" onclick="window.location.hash = '#home'">Home</span>
+        <span>/</span>
+        <span style="cursor:pointer; color:var(--color-accent);" onclick="window.location.hash = '#credit-cards'">Credit Cards</span>
+        <span>/</span>
+        <span style="opacity:0.6;">${card.name}</span>
+      </nav>
+
+      <!-- Details Grid Layout -->
+      <div style="display:grid; grid-template-columns:1fr; gap:2rem; margin-top:1rem;">
+        
+        <!-- Hero section with Card Mockup/Image and Key CTA -->
+        <div class="checkout-panel" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:2.5rem; align-items:center; padding:2rem; background:linear-gradient(135deg, rgba(59,130,246,0.03), rgba(16,185,129,0.03)); border:1px solid var(--color-border);">
+          <div>
+            ${cardImageHtml}
           </div>
 
           <div style="display:flex; flex-direction:column; justify-content:center; gap:1.25rem;">
@@ -2463,7 +2472,6 @@ window.addEventListener('unhandledrejection', function(event) {
             <p style="opacity:0.85; margin:0; line-height:1.6; font-size:0.95rem;">Experience premium benefits, accelerated cashback rewards, and travel lounge privileges curated for your wealth journey.</p>
             
             <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:0.5rem;">
-              <a href="${card.applyLink || '#credit-cards'}" target="_blank" class="btn primary" style="text-decoration:none; text-align:center; padding:0.75rem 2rem; font-size:0.9rem; font-weight:700;">Apply Now ➔</a>
               <button class="btn outline" onclick="window.location.hash = '#credit-cards'" style="padding:0.75rem 1.5rem; font-size:0.9rem;">Back to Listings</button>
             </div>
           </div>
